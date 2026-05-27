@@ -4405,6 +4405,180 @@ function guardarNotas(){
 }
 
 // ─── BOOT ────────────────────────────────────────────────────────────────────
+
+// ─── SUPLEMENTAÇÃO ────────────────────────────────────────────────────────────
+let suplAtivo = [];
+let suplEditIdx = null;
+
+function getSuplPac(){
+  return JSON.parse(localStorage.getItem('cs_supl')||'{}');
+}
+function saveSuplLocal(data){
+  localStorage.setItem('cs_supl', JSON.stringify(data));
+}
+
+function renderSuplementosTab(){
+  if(!pacienteAtivo) return;
+  const pacId = pacienteAtivo.id;
+  let todos = getSuplPac();
+  // Fallback: read from pacienteAtivo.notas if not in localStorage
+  if(!todos[pacId] && pacienteAtivo.notas && pacienteAtivo.notas.startsWith('{')){
+    try{
+      const parsed = JSON.parse(pacienteAtivo.notas);
+      if(parsed.supl && parsed.supl.length){
+        todos[pacId] = parsed.supl;
+        saveSuplLocal(todos);
+      }
+    }catch(e){}
+  }
+  const histPac = todos[pacId] || [];
+  if(histPac.length){
+    const last = histPac[histPac.length-1];
+    suplAtivo = JSON.parse(JSON.stringify(last.lista||[]));
+    document.getElementById('supl-data-label').textContent = 'Protocolo de ' + last.data;
+  } else {
+    suplAtivo = [];
+    document.getElementById('supl-data-label').textContent = 'Nenhum protocolo guardado ainda';
+  }
+  renderSuplLista();
+}
+
+function renderSuplLista(){
+  const el = document.getElementById('supl-lista');
+  if(!el) return;
+  if(!suplAtivo.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--gray-400);font-size:13px">Sem suplementos. Clica em "+ Adicionar".</div>';
+    return;
+  }
+  const ativos = suplAtivo.filter(s=>s.estado==='ativo');
+  const pausados = suplAtivo.filter(s=>s.estado==='pausado');
+  const desc = suplAtivo.filter(s=>s.estado==='descontinuado');
+  let html='';
+  const renderGroup=(lista,label)=>{
+    if(!lista.length)return;
+    html+=`<div class="card" style="margin-bottom:12px">
+      <div class="card-header" style="padding:8px 16px;background:var(--gray-50)">
+        <h2 style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-400)">${label} (${lista.length})</h2>
+      </div><div>`;
+    lista.forEach(s=>{
+      const idx=suplAtivo.indexOf(s);
+      const badgeCls=s.estado==='ativo'?'badge-ativo':s.estado==='pausado'?'badge-pausado':'badge-descontinuado';
+      const badgeTxt=s.estado==='ativo'?'Ativo':s.estado==='pausado'?'Pausado':'Descontinuado';
+      html+=`<div class="supl-row">
+        <div><div class="supl-nome">${s.nome}</div>${s.notas?`<div class="supl-notas">${s.notas}</div>`:''}</div>
+        <div class="supl-dose">${s.dose||''}${s.unidade?' '+s.unidade:''}</div>
+        <div class="supl-freq">${s.freq||''}</div>
+        <div><span class="${badgeCls}">${badgeTxt}</span></div>
+        <button onclick="editarSuplemento(${idx})" style="background:none;border:1px solid var(--gray-200);border-radius:5px;cursor:pointer;padding:3px 7px;font-size:11px;color:var(--gray-600)">✏</button>
+      </div>`;
+    });
+    html+='</div></div>';
+  };
+  renderGroup(ativos,'Ativos');
+  renderGroup(pausados,'Pausados');
+  renderGroup(desc,'Descontinuados');
+  el.innerHTML=html;
+}
+
+function abrirModalNovoSupl(){
+  suplEditIdx=null;
+  document.getElementById('modal-supl-title').textContent='Adicionar Suplemento';
+  document.getElementById('supl-apagar-btn').style.display='none';
+  ['supl-nome','supl-dose','supl-unidade','supl-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('supl-freq').value='Diária';
+  document.getElementById('supl-estado').value='ativo';
+  document.getElementById('modal-supl').classList.add('open');
+}
+
+function editarSuplemento(idx){
+  suplEditIdx=idx;
+  const s=suplAtivo[idx];
+  document.getElementById('modal-supl-title').textContent='Editar Suplemento';
+  document.getElementById('supl-apagar-btn').style.display='';
+  document.getElementById('supl-nome').value=s.nome||'';
+  document.getElementById('supl-dose').value=s.dose||'';
+  document.getElementById('supl-unidade').value=s.unidade||'';
+  document.getElementById('supl-freq').value=s.freq||'Diária';
+  document.getElementById('supl-estado').value=s.estado||'ativo';
+  document.getElementById('supl-notas').value=s.notas||'';
+  document.getElementById('modal-supl').classList.add('open');
+}
+
+function guardarSuplemento(){
+  const nome=document.getElementById('supl-nome').value.trim();
+  if(!nome){showToast('Insere o nome.');return;}
+  const s={nome,dose:document.getElementById('supl-dose').value.trim(),
+    unidade:document.getElementById('supl-unidade').value.trim(),
+    freq:document.getElementById('supl-freq').value,
+    estado:document.getElementById('supl-estado').value,
+    notas:document.getElementById('supl-notas').value.trim()};
+  if(suplEditIdx!==null)suplAtivo[suplEditIdx]=s;
+  else suplAtivo.push(s);
+  fecharModal('modal-supl');
+  renderSuplLista();
+}
+
+function apagarSuplemento(){
+  if(suplEditIdx===null)return;
+  if(!confirm('Apagar este suplemento?'))return;
+  suplAtivo.splice(suplEditIdx,1);
+  fecharModal('modal-supl');
+  renderSuplLista();
+}
+
+function guardarProtocoloSupl(){
+  if(!pacienteAtivo){showToast('Nenhum paciente activo.');return;}
+  if(!suplAtivo.length){showToast('Adiciona pelo menos um suplemento.');return;}
+  const pacId=pacienteAtivo.id;
+  const todos=getSuplPac();
+  if(!todos[pacId])todos[pacId]=[];
+  const data=new Date().toISOString().slice(0,10);
+  todos[pacId]=todos[pacId].filter(p=>p.data!==data);
+  todos[pacId].push({id:Date.now().toString(),data,lista:JSON.parse(JSON.stringify(suplAtivo))});
+  todos[pacId].sort((a,b)=>a.data.localeCompare(b.data));
+  saveSuplLocal(todos);
+  // Sync to Supabase
+  supa('PATCH','pacientes',{notas:JSON.stringify({supl:todos[pacId]})},`?id=eq.${pacId}`)
+    .catch(e=>console.error(e));
+  // Update local paciente object
+  const p=pacientes.find(x=>x.id===pacId);
+  if(p)p.notas=JSON.stringify({supl:todos[pacId]});
+  document.getElementById('supl-data-label').textContent='Protocolo de '+data;
+  showToast('Protocolo guardado! ✓');
+}
+
+function abrirHistoricoSupl(){
+  if(!pacienteAtivo)return;
+  const todos=getSuplPac();
+  const histPac=(todos[pacienteAtivo.id]||[]).slice().reverse();
+  if(!histPac.length){showToast('Sem histórico de protocolos.');return;}
+  const lista=document.getElementById('supl-hist-lista');
+  lista.innerHTML=histPac.map((p,i)=>`
+    <div class="supl-hist-item ${i===0?'selected':''}" onclick="carregarProtocolo('${p.data}')">
+      <div style="font-size:12px;font-weight:600">${p.data}</div>
+      <div style="font-size:11px;color:var(--gray-400)">${p.lista.length} suplementos · ${p.lista.filter(s=>s.estado==='ativo').length} ativos</div>
+    </div>`).join('');
+  document.getElementById('supl-hist-panel').style.display='';
+}
+
+function fecharHistoricoSupl(){
+  document.getElementById('supl-hist-panel').style.display='none';
+}
+
+function carregarProtocolo(data){
+  if(!pacienteAtivo)return;
+  const todos=getSuplPac();
+  const histPac=todos[pacienteAtivo.id]||[];
+  const entry=histPac.find(p=>p.data===data);
+  if(!entry)return;
+  suplAtivo=JSON.parse(JSON.stringify(entry.lista));
+  document.getElementById('supl-data-label').textContent='Protocolo de '+data+' (leitura)';
+  document.querySelectorAll('.supl-hist-item').forEach(el=>{
+    el.classList.toggle('selected',el.querySelector('div').textContent===data);
+  });
+  renderSuplLista();
+}
+
 async function bootFromSupabase(){
   // Always load fresh from Supabase — single source of truth
   // Clear stale local cache first
