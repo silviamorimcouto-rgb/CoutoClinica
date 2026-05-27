@@ -3583,24 +3583,10 @@ function renderResultadosTab(){
   const sexoEl=document.getElementById('res-sexo');
   if(sexoEl)sexoEl.value=pacienteAtivo.sexo||'f';
   const ab=document.getElementById('btn-apagar-data-toolbar');if(ab)ab.style.display='none';
-  const eb2=document.getElementById('btn-editar-data-toolbar');if(eb2)eb2.style.display='none';
-  const pacId=pacienteAtivo.id;
-
-  const doRender=()=>{renderDatasList();renderResTabela();updateGuardarBtn();};
-
-  if(!resultados[pacId]||!resultados[pacId].length){
-    // Fetch from Supabase
-    supa('GET','resultados','',`?paciente_id=eq.${pacId}&order=data`)
-      .then(rows=>{
-        if(rows&&rows.length){
-          resultados[pacId]=rows.map(r=>({data:r.data,sexo:r.sexo||'f',valores:r.valores||{}}));
-          localStorage.setItem('cs_resultados',JSON.stringify(resultados));
-        }
-        doRender();
-      }).catch(()=>doRender());
-  } else {
-    doRender();
-  }
+  const eb=document.getElementById('btn-editar-data-toolbar');if(eb)eb.style.display='none';
+  renderDatasList();
+  renderResTabela();
+  updateGuardarBtn();
 }
 
 
@@ -3655,33 +3641,14 @@ function selectData(data){
   const di=document.getElementById('res-data');if(di)di.value=data;
   const ab=document.getElementById('btn-apagar-data-toolbar');if(ab)ab.style.display='';
   const eb2=document.getElementById('btn-editar-data-toolbar');if(eb2)eb2.style.display='';
-
-  const pacId=pacienteAtivo.id;
-  const hist=resultados[pacId]||[];
+  const hist=resultados[pacienteAtivo.id]||[];
   const entry=hist.find(h=>h.data===data);
-  if(entry){
-    resValoresAtivos=JSON.parse(JSON.stringify(entry.valores||{}));
-    const s=document.getElementById('res-sexo');if(s&&entry.sexo)s.value=entry.sexo;
-    renderDatasList();renderResTabela();updateGuardarBtn();
-  } else {
-    resValoresAtivos={};
-    renderDatasList();renderResTabela();updateGuardarBtn();
-    supa('GET','resultados','',`?paciente_id=eq.${pacId}&data=eq.${data}&limit=1`)
-      .then(rows=>{
-        if(rows&&rows.length){
-          const r=rows[0];
-          resValoresAtivos=r.valores||{};
-          const s=document.getElementById('res-sexo');if(s&&r.sexo)s.value=r.sexo;
-          if(!resultados[pacId])resultados[pacId]=[];
-          if(!resultados[pacId].find(h=>h.data===data)){
-            resultados[pacId].push({data,sexo:r.sexo||'f',valores:r.valores||{}});
-            resultados[pacId].sort((a,b)=>a.data.localeCompare(b.data));
-            localStorage.setItem('cs_resultados',JSON.stringify(resultados));
-          }
-          renderResTabela();
-        }
-      }).catch(e=>console.error(e));
-  }
+  resValoresAtivos=entry?JSON.parse(JSON.stringify(entry.valores||{})):{};
+  const s=document.getElementById('res-sexo');
+  if(s&&entry?.sexo)s.value=entry.sexo;
+  renderDatasList();
+  renderResTabela();
+  updateGuardarBtn();
 }
 
 
@@ -4439,242 +4406,80 @@ function guardarNotas(){
 
 // ─── BOOT ────────────────────────────────────────────────────────────────────
 async function bootFromSupabase(){
-  // 1. Load from localStorage immediately so app works offline/local
-  const cachedPacs = localStorage.getItem('cs_pacientes');
-  const cachedHist = localStorage.getItem('cs_historico');
-  const cachedRes  = localStorage.getItem('cs_resultados');
-  if(cachedPacs){ pacientes = JSON.parse(cachedPacs); }
-  if(cachedHist){ historico = JSON.parse(cachedHist); }
-  if(cachedRes){
-    const resObj = JSON.parse(cachedRes);
-    Object.keys(resObj).forEach(k=>{ if(!resultados[k]) resultados[k]=resObj[k]; });
-  }
-  renderPacientesCards(); // show immediately from cache
+  // Always load fresh from Supabase — single source of truth
+  // Clear stale local cache first
+  localStorage.removeItem('cs_pacientes');
+  localStorage.removeItem('cs_historico');
+  localStorage.removeItem('cs_resultados');
+  localStorage.removeItem('cs_supl');
 
-  // 2. Then try Supabase in background
-  showToast('A sincronizar...',2000);
+  showToast('A carregar dados...', 4000);
   try{
-    const pacs=await supa('GET','pacientes','','?order=nome');
-    if(pacs&&pacs.length){
-      pacientes=pacs;
-      localStorage.setItem('cs_pacientes',JSON.stringify(pacientes));
-      // Extract supplementation from paciente.notas field
+    // 1. Pacientes
+    const pacs = await supa('GET','pacientes','','?order=nome');
+    if(pacs && pacs.length){
+      pacientes = pacs;
+      localStorage.setItem('cs_pacientes', JSON.stringify(pacientes));
+      // Extract supplementation from notas field
       const suplMap={};
       pacs.forEach(p=>{
         if(!p.notas||!p.notas.startsWith('{'))return;
         try{
           const parsed=JSON.parse(p.notas);
-          if(parsed.supl&&parsed.supl.length){
-            suplMap[p.id]=parsed.supl;
-          }
+          if(parsed.supl&&parsed.supl.length) suplMap[p.id]=parsed.supl;
         }catch(e){}
       });
-      if(Object.keys(suplMap).length){
-        localStorage.setItem('cs_supl',JSON.stringify(suplMap));
-      }
+      if(Object.keys(suplMap).length) localStorage.setItem('cs_supl',JSON.stringify(suplMap));
     }
-    const presc=await supa('GET','prescricoes','','?order=data.desc&limit=200');
-    if(presc&&presc.length){
-      historico=presc.map(h=>({id:h.id,data:h.data,pacienteNome:h.paciente_nome,pacienteNif:h.paciente_nif,pacienteSeguro:h.paciente_seguro,pacienteLocal:h.paciente_local,pacienteId:h.paciente_id,analises:h.analises||{},ecos:h.ecos||[],obs:h.obs||'',total:h.total||0}));
-      localStorage.setItem('cs_historico',JSON.stringify(historico));
+
+    // 2. Histórico de prescrições
+    const presc = await supa('GET','prescricoes','','?order=data.desc&limit=200');
+    if(presc && presc.length){
+      historico = presc.map(h=>({
+        id:h.id, data:h.data, pacienteNome:h.paciente_nome,
+        pacienteNif:h.paciente_nif, pacienteSeguro:h.paciente_seguro,
+        pacienteLocal:h.paciente_local, pacienteId:h.paciente_id,
+        analises:h.analises||{}, ecos:h.ecos||[], obs:h.obs||'', total:h.total||0
+      }));
+      localStorage.setItem('cs_historico', JSON.stringify(historico));
     }
-    const resRows=await supa('GET','resultados','','?order=data.desc');
-    if(resRows&&resRows.length){
+
+    // 3. Resultados de análises
+    const resRows = await supa('GET','resultados','','?order=data');
+    if(resRows && resRows.length){
       const resObj={};
-      resRows.forEach(r=>{if(!resObj[r.paciente_id])resObj[r.paciente_id]=[];resObj[r.paciente_id].push({data:r.data,sexo:r.sexo||'f',valores:r.valores||{}});});
-      Object.keys(resObj).forEach(k=>resObj[k].sort((a,b)=>a.data.localeCompare(b.data)));
-      resultados=resObj;localStorage.setItem('cs_resultados',JSON.stringify(resultados));
+      resRows.forEach(r=>{
+        if(!resObj[r.paciente_id]) resObj[r.paciente_id]=[];
+        resObj[r.paciente_id].push({data:r.data, sexo:r.sexo||'f', valores:r.valores||{}});
+      });
+      resultados = resObj;
+      localStorage.setItem('cs_resultados', JSON.stringify(resultados));
     }
-    const overrides=await supa('GET','ref_overrides','','');
-    if(overrides&&overrides.length){refOverrides={};overrides.forEach(r=>{refOverrides[r.nome]=r.dados;});localStorage.setItem('cs_ref_overrides',JSON.stringify(refOverrides));}
-    const refU=await supa('GET','ref_user','','');
-    if(refU&&refU.length)localStorage.setItem('cs_ref_user',JSON.stringify(refU.map(r=>r.dados)));
-    showToast('Sincronizado! ✓');
-  }catch(e){console.warn('Supabase boot error:',e);showToast('Modo offline — dados locais');}
+
+    // 4. Ref overrides
+    const overrides = await supa('GET','ref_overrides','','');
+    if(overrides && overrides.length){
+      refOverrides={};
+      overrides.forEach(r=>{refOverrides[r.nome]=r.dados;});
+      localStorage.setItem('cs_ref_overrides', JSON.stringify(refOverrides));
+    }
+
+    // 5. Ref user
+    const refU = await supa('GET','ref_user','','');
+    if(refU && refU.length)
+      localStorage.setItem('cs_ref_user', JSON.stringify(refU.map(r=>r.dados)));
+
+    showToast('Dados carregados! ✓');
+  } catch(e){
+    console.warn('Supabase error:', e);
+    // Fallback to localStorage cache if Supabase fails
+    const cached = localStorage.getItem('cs_pacientes');
+    if(cached) pacientes = JSON.parse(cached);
+    showToast('Sem ligação — a usar dados locais');
+  }
   renderPacientesCards();
 }
 
-
-// ─── SUPLEMENTAÇÃO ────────────────────────────────────────────────────────────
-// suplementos = { pacienteId: [ {id, data, lista:[{nome,dose,unidade,freq,estado,notas}]} ] }
-let suplAtivo = []; // current editing list
-let suplEditIdx = null; // index in suplAtivo being edited
-
-function getSuplPac(){ return JSON.parse(localStorage.getItem('cs_supl')||'{}'); }
-function saveSuplLocal(data){ localStorage.setItem('cs_supl', JSON.stringify(data)); }
-
-function renderSuplementosTab(){
-  if(!pacienteAtivo)return;
-  const pacId = pacienteAtivo.id;
-  let todos = getSuplPac();
-  // Fallback: read from pacienteAtivo.notas if not in localStorage
-  if(!todos[pacId] && pacienteAtivo.notas && pacienteAtivo.notas.startsWith('{')) {
-    try {
-      const parsed = JSON.parse(pacienteAtivo.notas);
-      if(parsed.supl && parsed.supl.length) {
-        todos[pacId] = parsed.supl;
-        saveSuplLocal(todos);
-      }
-    } catch(e) {}
-  }
-  const histPac = todos[pacId] || [];
-  // Load most recent protocol
-  if(histPac.length){
-    const last = histPac[histPac.length-1];
-    suplAtivo = JSON.parse(JSON.stringify(last.lista || []));
-    document.getElementById('supl-data-label').textContent = 'Protocolo de ' + last.data;
-  } else {
-    suplAtivo = [];
-    document.getElementById('supl-data-label').textContent = 'Nenhum protocolo guardado ainda';
-  }
-  renderSuplLista();
-}
-
-function renderSuplLista(){
-  const el = document.getElementById('supl-lista');
-  if(!suplAtivo.length){
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-400);font-size:13px">Sem suplementos. Clica em "+ Adicionar" para começar.</div>';
-    return;
-  }
-  // Group by estado
-  const ativos = suplAtivo.filter(s=>s.estado==='ativo');
-  const pausados = suplAtivo.filter(s=>s.estado==='pausado');
-  const desc = suplAtivo.filter(s=>s.estado==='descontinuado');
-  let html = '';
-  const renderGroup = (lista, label) => {
-    if(!lista.length) return;
-    html += `<div class="card" style="margin-bottom:12px">
-      <div class="card-header" style="padding:8px 16px;background:var(--gray-50)">
-        <h2 style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-400)">${label} (${lista.length})</h2>
-      </div>
-      <div>`;
-    lista.forEach((s,i)=>{
-      const idx = suplAtivo.indexOf(s);
-      const badgeCls = s.estado==='ativo'?'badge-ativo':s.estado==='pausado'?'badge-pausado':'badge-descontinuado';
-      const badgeTxt = s.estado==='ativo'?'Ativo':s.estado==='pausado'?'Pausado':'Descontinuado';
-      html += `<div class="supl-row">
-        <div>
-          <div class="supl-nome">${s.nome}</div>
-          ${s.notas?`<div class="supl-notas">${s.notas}</div>`:''}
-        </div>
-        <div class="supl-dose">${s.dose||''}${s.unidade?' '+s.unidade:''}</div>
-        <div class="supl-freq">${s.freq||''}</div>
-        <div><span class="${badgeCls}">${badgeTxt}</span></div>
-        <button onclick="editarSuplemento(${idx})" style="background:none;border:1px solid var(--gray-200);border-radius:5px;cursor:pointer;padding:3px 7px;font-size:11px;color:var(--gray-600)">✏</button>
-      </div>`;
-    });
-    html += '</div></div>';
-  };
-  renderGroup(ativos, 'Ativos');
-  renderGroup(pausados, 'Pausados');
-  renderGroup(desc, 'Descontinuados');
-  el.innerHTML = html;
-}
-
-function abrirModalNovoSupl(){
-  suplEditIdx = null;
-  document.getElementById('modal-supl-title').textContent = 'Adicionar Suplemento';
-  document.getElementById('supl-apagar-btn').style.display = 'none';
-  ['supl-nome','supl-dose','supl-unidade','supl-notas'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('supl-freq').value = 'Diária';
-  document.getElementById('supl-estado').value = 'ativo';
-  document.getElementById('modal-supl').classList.add('open');
-}
-
-function editarSuplemento(idx){
-  suplEditIdx = idx;
-  const s = suplAtivo[idx];
-  document.getElementById('modal-supl-title').textContent = 'Editar Suplemento';
-  document.getElementById('supl-apagar-btn').style.display = '';
-  document.getElementById('supl-nome').value = s.nome || '';
-  document.getElementById('supl-dose').value = s.dose || '';
-  document.getElementById('supl-unidade').value = s.unidade || '';
-  document.getElementById('supl-freq').value = s.freq || 'Diária';
-  document.getElementById('supl-estado').value = s.estado || 'ativo';
-  document.getElementById('supl-notas').value = s.notas || '';
-  document.getElementById('modal-supl').classList.add('open');
-}
-
-function guardarSuplemento(){
-  const nome = document.getElementById('supl-nome').value.trim();
-  if(!nome){ showToast('Insere o nome do suplemento.'); return; }
-  const s = {
-    nome,
-    dose: document.getElementById('supl-dose').value.trim(),
-    unidade: document.getElementById('supl-unidade').value.trim(),
-    freq: document.getElementById('supl-freq').value,
-    estado: document.getElementById('supl-estado').value,
-    notas: document.getElementById('supl-notas').value.trim()
-  };
-  if(suplEditIdx !== null) suplAtivo[suplEditIdx] = s;
-  else suplAtivo.push(s);
-  fecharModal('modal-supl');
-  renderSuplLista();
-}
-
-function apagarSuplemento(){
-  if(suplEditIdx === null) return;
-  if(!confirm('Apagar este suplemento da lista?')) return;
-  suplAtivo.splice(suplEditIdx, 1);
-  fecharModal('modal-supl');
-  renderSuplLista();
-}
-
-function guardarProtocoloSupl(){
-  if(!pacienteAtivo){ showToast('Nenhum paciente activo.'); return; }
-  if(!suplAtivo.length){ showToast('Adiciona pelo menos um suplemento.'); return; }
-  const pacId = pacienteAtivo.id;
-  const todos = getSuplPac();
-  if(!todos[pacId]) todos[pacId] = [];
-  const data = new Date().toISOString().slice(0,10);
-  // Remove existing entry for same date
-  todos[pacId] = todos[pacId].filter(p=>p.data!==data);
-  todos[pacId].push({ id: Date.now().toString(), data, lista: JSON.parse(JSON.stringify(suplAtivo)) });
-  todos[pacId].sort((a,b)=>a.data.localeCompare(b.data));
-  saveSuplLocal(todos);
-  // Sync to Supabase (store in paciente notas_supl field or separate)
-  fetch(`${SUPA_URL}/rest/v1/pacientes?id=eq.${pacId}`, {
-    method:'PATCH',
-    headers:{'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json'},
-    body: JSON.stringify({notas: JSON.stringify({supl: todos[pacId]})})
-  }).catch(e=>console.error(e));
-  document.getElementById('supl-data-label').textContent = 'Protocolo de ' + data;
-  showToast('Protocolo guardado! ✓');
-}
-
-function abrirHistoricoSupl(){
-  if(!pacienteAtivo) return;
-  const panel = document.getElementById('supl-hist-panel');
-  const lista = document.getElementById('supl-hist-lista');
-  const todos = getSuplPac();
-  const histPac = (todos[pacienteAtivo.id] || []).slice().reverse();
-  if(!histPac.length){ showToast('Sem histórico de protocolos.'); return; }
-  lista.innerHTML = histPac.map((p,i)=>`
-    <div class="supl-hist-item ${i===0?'selected':''}" onclick="carregarProtocolo('${p.data}')">
-      <div style="font-size:12px;font-weight:600;color:var(--gray-800)">${p.data}</div>
-      <div style="font-size:11px;color:var(--gray-400);margin-top:2px">${p.lista.length} suplemento${p.lista.length!==1?'s':''} · ${p.lista.filter(s=>s.estado==='ativo').length} ativos</div>
-    </div>`).join('');
-  panel.style.display = '';
-}
-
-function fecharHistoricoSupl(){
-  document.getElementById('supl-hist-panel').style.display = 'none';
-}
-
-function carregarProtocolo(data){
-  if(!pacienteAtivo) return;
-  const todos = getSuplPac();
-  const histPac = todos[pacienteAtivo.id] || [];
-  const entry = histPac.find(p=>p.data===data);
-  if(!entry) return;
-  suplAtivo = JSON.parse(JSON.stringify(entry.lista));
-  document.getElementById('supl-data-label').textContent = 'Protocolo de ' + data + ' (leitura)';
-  // Update selected style
-  document.querySelectorAll('.supl-hist-item').forEach(el=>{
-    el.classList.toggle('selected', el.querySelector('div').textContent===data);
-  });
-  renderSuplLista();
-}
 
 bootFromSupabase();
 
