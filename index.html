@@ -3579,21 +3579,30 @@ let resUnsaved = false; // track unsaved changes
 
 function renderResultadosTab(){
   if(!pacienteAtivo) return;
-  resValoresAtivos = {};
-  resDataActiva = null;
-  resUnsaved = false;
-  const sexoEl = document.getElementById('res-sexo');
-  if(sexoEl) sexoEl.value = pacienteAtivo.sexo || 'f';
-  renderDatasList();
-  renderResTabela();
-  updateGuardarBtn();
-  const eg = document.getElementById('evo-grid-container');
-  const mp = document.getElementById('res-master-panel');
-  if(eg) eg.style.display='none';
-  if(mp){mp.style.display='none';mp.dataset.open='0';}
-  const eb = document.getElementById('btn-evo-grid');
-  if(eb){eb.style.background='';eb.style.color='';}
+  resValoresAtivos={};resDataActiva=null;resUnsaved=false;
+  const sexoEl=document.getElementById('res-sexo');
+  if(sexoEl)sexoEl.value=pacienteAtivo.sexo||'f';
+  const ab=document.getElementById('btn-apagar-data-toolbar');if(ab)ab.style.display='none';
+  const eb2=document.getElementById('btn-editar-data-toolbar');if(eb2)eb2.style.display='none';
+  const pacId=pacienteAtivo.id;
+
+  const doRender=()=>{renderDatasList();renderResTabela();updateGuardarBtn();};
+
+  if(!resultados[pacId]||!resultados[pacId].length){
+    // Fetch from Supabase
+    supa('GET','resultados','',`?paciente_id=eq.${pacId}&order=data`)
+      .then(rows=>{
+        if(rows&&rows.length){
+          resultados[pacId]=rows.map(r=>({data:r.data,sexo:r.sexo||'f',valores:r.valores||{}}));
+          localStorage.setItem('cs_resultados',JSON.stringify(resultados));
+        }
+        doRender();
+      }).catch(()=>doRender());
+  } else {
+    doRender();
+  }
 }
+
 
 function updateGuardarBtn(){
   const btn = document.getElementById('btn-guardar-res');
@@ -3637,29 +3646,44 @@ function renderDatasList(){
 
 function selectData(data){
   if(!pacienteAtivo) return;
-  // Reset edit mode UI
   const lbl0=document.getElementById('res-data-label');
   const de0=document.getElementById('res-data-edit');
   if(lbl0){lbl0.style.display='';lbl0.textContent=data;}
   if(de0)de0.style.display='none';
-  resDataActiva = data;
-  resUnsaved = false;
-  const hist = resultados[pacienteAtivo.id] || [];
-  const entry = hist.find(h => h.data === data);
-  resValoresAtivos = entry ? JSON.parse(JSON.stringify(entry.valores||{})) : {};
-  if(entry?.sexo){ const s=document.getElementById('res-sexo'); if(s)s.value=entry.sexo; }
-  const lbl = document.getElementById('res-data-label');
-  if(lbl) lbl.textContent = data;
-  const di = document.getElementById('res-data'); if(di) di.value = data;
-  renderDatasList();
-  renderResTabela();
-  updateGuardarBtn();
-  // Show editar + apagar buttons
-  const ab=document.getElementById('btn-apagar-data-toolbar');
-  if(ab)ab.style.display='';
-  const eb2=document.getElementById('btn-editar-data-toolbar');
-  if(eb2)eb2.style.display='';
+  resDataActiva=data;
+  resUnsaved=false;
+  const di=document.getElementById('res-data');if(di)di.value=data;
+  const ab=document.getElementById('btn-apagar-data-toolbar');if(ab)ab.style.display='';
+  const eb2=document.getElementById('btn-editar-data-toolbar');if(eb2)eb2.style.display='';
+
+  const pacId=pacienteAtivo.id;
+  const hist=resultados[pacId]||[];
+  const entry=hist.find(h=>h.data===data);
+  if(entry){
+    resValoresAtivos=JSON.parse(JSON.stringify(entry.valores||{}));
+    const s=document.getElementById('res-sexo');if(s&&entry.sexo)s.value=entry.sexo;
+    renderDatasList();renderResTabela();updateGuardarBtn();
+  } else {
+    resValoresAtivos={};
+    renderDatasList();renderResTabela();updateGuardarBtn();
+    supa('GET','resultados','',`?paciente_id=eq.${pacId}&data=eq.${data}&limit=1`)
+      .then(rows=>{
+        if(rows&&rows.length){
+          const r=rows[0];
+          resValoresAtivos=r.valores||{};
+          const s=document.getElementById('res-sexo');if(s&&r.sexo)s.value=r.sexo;
+          if(!resultados[pacId])resultados[pacId]=[];
+          if(!resultados[pacId].find(h=>h.data===data)){
+            resultados[pacId].push({data,sexo:r.sexo||'f',valores:r.valores||{}});
+            resultados[pacId].sort((a,b)=>a.data.localeCompare(b.data));
+            localStorage.setItem('cs_resultados',JSON.stringify(resultados));
+          }
+          renderResTabela();
+        }
+      }).catch(e=>console.error(e));
+  }
 }
+
 
 function novaDataResultados(){
   if(resUnsaved && !confirm('Tens alterações não guardadas. Continuar sem guardar?')) return;
@@ -4261,83 +4285,113 @@ async function gerarWord(nome,nif,seguro,local,sel,ecos,obs){
 // ─── GERAR RELATÓRIO DE RESULTADOS ────────────────────────────────────────────
 async function gerarRelatorioResultados(){
   if(!pacienteAtivo){showToast('Nenhum paciente activo.');return;}
-  const pacId=pacienteAtivo.id;
-  const data=document.getElementById('res-data')?.value||new Date().toISOString().slice(0,10);
-  const sexo=document.getElementById('res-sexo')?.value||'f';
-  let valores={...resValoresAtivos};
-  if(!Object.keys(valores).length){
-    const hist=resultados[pacId]||[];
-    const entry=hist.find(h=>h.data===data)||hist[hist.length-1];
-    if(entry)valores=entry.valores||{};
-  }
-  if(!Object.keys(valores).length){showToast('Sem resultados para gerar relatório.');return;}
-  const p=pacienteAtivo;
-  const allRef=getRefFinal();
-  showToast('A gerar relatório...',4000);
-  const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,Header,Footer,AlignmentType,BorderStyle,WidthType,ShadingType,PageNumber,TabStopType}=docx;
-  const AZ_ESC="1A3A5C",BRANCO="FFFFFF",CINZA="444444",VERDE_BG="D4EDDA",VERDE_TX="155724",VERM_BG="F8D7DA",VERM_TX="721C24",AMAR_BG="FFF3CD",AMAR_TX="856404";
-  const bN={top:{style:BorderStyle.NONE,size:0,color:"FFFFFF"},bottom:{style:BorderStyle.NONE,size:0,color:"FFFFFF"},left:{style:BorderStyle.NONE,size:0,color:"FFFFFF"},right:{style:BorderStyle.NONE,size:0,color:"FFFFFF"}};
-  const esp=(p=60)=>new Paragraph({spacing:{before:p,after:0},children:[]});
-  const hoje=new Date();
-  const dataFmt=new Date(data+'T12:00:00').toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
-  const mesAno=hoje.toLocaleDateString('pt-PT',{month:'long',year:'numeric'});
-  const children=[];
-  const perfis={};
+  showToast('A gerar PDF...', 5000);
+
+  const pac = pacienteAtivo;
+  const sexo = document.getElementById('res-sexo')?.value || 'f';
+  const hist = (resultados[pac.id] || []).slice().sort((a,b)=>a.data.localeCompare(b.data));
+  if(!hist.length){showToast('Sem resultados para gerar relatório.');return;}
+
+  const allRef = getRefFinal();
+  const hoje = new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
+
+  // Build HTML for PDF
+  const datas = hist.map(h=>h.data);
+
+  // Collect all markers that have at least one value
+  const marcadoresComDados = [];
+  const perfisVistos = {};
   allRef.forEach(a=>{
-    if(valores[a.nome]===undefined||valores[a.nome].valor===''||valores[a.nome].valor===undefined)return;
-    if(!perfis[a.perfil])perfis[a.perfil]=[];perfis[a.perfil].push(a);
+    const temValor = datas.some(d=>hist.find(h=>h.data===d)?.valores?.[a.nome]!==undefined);
+    if(!temValor) return;
+    const perfil = a.perfil.split('(')[0].trim();
+    if(!perfisVistos[perfil]) perfisVistos[perfil]=[];
+    perfisVistos[perfil].push(a);
   });
-  let totalIdeal=0,totalAlto=0,totalBaixo=0;
-  Object.entries(perfis).forEach(([perfil,lista],pi)=>{
-    const nomeC=perfil.split('(')[0].trim();
-    children.push(new Paragraph({spacing:{before:pi>0?180:0,after:80},border:{bottom:{style:BorderStyle.SINGLE,size:6,color:'CCCCCC',space:1}},children:[new TextRun({text:nomeC.toUpperCase(),font:'Arial',size:19,bold:true,color:AZ_ESC})]}));
-    const hdrRow=new TableRow({children:[
-      new TableCell({borders:bN,width:{size:3000,type:WidthType.DXA},shading:{fill:"EEEEEE",type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:120,right:80},children:[new Paragraph({children:[new TextRun({text:'MARCADOR',font:'Arial',size:16,bold:true,color:'555555'})],spacing:{before:10,after:10}})]}),
-      new TableCell({borders:bN,width:{size:1600,type:WidthType.DXA},shading:{fill:"EEEEEE",type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:80,right:80},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'VALOR',font:'Arial',size:16,bold:true,color:'555555'})],spacing:{before:10,after:10}})]}),
-      new TableCell({borders:bN,width:{size:2800,type:WidthType.DXA},shading:{fill:"EEEEEE",type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:80,right:80},children:[new Paragraph({children:[new TextRun({text:'REFERÊNCIA IDEAL',font:'Arial',size:16,bold:true,color:'555555'})],spacing:{before:10,after:10}})]}),
-      new TableCell({borders:bN,width:{size:1800,type:WidthType.DXA},shading:{fill:"EEEEEE",type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:80,right:80},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'ESTADO',font:'Arial',size:16,bold:true,color:'555555'})],spacing:{before:10,after:10}})]})
-    ]});
-    const rows=lista.map(a=>{
-      const valObj=valores[a.nome]||{};const val=String(valObj.valor||'');const unit=valObj.unidade||a.unidade||'';
-      const minV=sexo==='f'?a.min_f:a.min_m;const maxV=sexo==='f'?a.max_f:a.max_m;
-      const ref=sexo==='f'?a.ref_f:a.ref_m;const n=parseFloat(val.replace(',','.'));
-      let statusTxt='—',statusBg="EEEEEE",statusTxColor='888888';
-      if(val!==''&&!isNaN(n)&&(minV!==null||maxV!==null)){
-        if(minV!==null&&n<minV){statusTxt='↓ Baixo';statusBg=AMAR_BG;statusTxColor=AMAR_TX;totalBaixo++;}
-        else if(maxV!==null&&n>maxV){statusTxt='↑ Alto';statusBg=VERM_BG;statusTxColor=VERM_TX;totalAlto++;}
-        else{statusTxt='✓ Ideal';statusBg=VERDE_BG;statusTxColor=VERDE_TX;totalIdeal++;}
-      }
-      return new TableRow({children:[
-        new TableCell({borders:bN,width:{size:3000,type:WidthType.DXA},shading:{fill:"F5F5F5",type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:120,right:80},children:[new Paragraph({children:[new TextRun({text:a.nome,font:'Arial',size:18,bold:true,color:'222222'})],spacing:{before:20,after:20}})]}),
-        new TableCell({borders:bN,width:{size:1600,type:WidthType.DXA},shading:{fill:"F5F5F5",type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:fmt2(val)+(unit?' '+unit:''),font:'Arial',size:20,bold:true,color:'111111'})],spacing:{before:20,after:20}})]}),
-        new TableCell({borders:bN,width:{size:2800,type:WidthType.DXA},shading:{fill:"F5F5F5",type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},children:[new Paragraph({children:[new TextRun({text:ref||(minV!==null||maxV!==null?`${minV??''}${minV&&maxV?' a ':''}${maxV??''}`:'')||'—',font:'Arial',size:17,color:'666666'})],spacing:{before:20,after:20}})]}),
-        new TableCell({borders:bN,width:{size:1800,type:WidthType.DXA},shading:{fill:statusBg,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:statusTxt,font:'Arial',size:18,bold:true,color:statusTxColor})],spacing:{before:20,after:20}})]})
-      ]});
+
+  // Build HTML table
+  let tableHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:8px">
+      <thead>
+        <tr style="background:#1A3A5C;color:white">
+          <th style="padding:6px 8px;text-align:left;min-width:140px">Análise</th>
+          <th style="padding:6px 8px;text-align:left;min-width:80px">Referência</th>
+          ${datas.map(d=>`<th style="padding:6px 8px;text-align:center;white-space:nowrap">${d}</th>`).join('')}
+        </tr>
+      </thead><tbody>`;
+
+  Object.entries(perfisVistos).forEach(([perfil,lista])=>{
+    tableHTML += `<tr><td colspan="${datas.length+2}" style="background:#2E6DA4;color:white;font-size:9px;font-weight:700;letter-spacing:0.5px;padding:4px 8px;text-transform:uppercase">${perfil}</td></tr>`;
+    lista.forEach((a,ai)=>{
+      const ref = sexo==='f'?(a.ref_f||''):(a.ref_m||'');
+      const minV = sexo==='f'?a.min_f:a.min_m;
+      const maxV = sexo==='f'?a.max_f:a.max_m;
+      const bg = ai%2===0?'#f9f9f9':'white';
+      const cells = datas.map(d=>{
+        const entry = hist.find(h=>h.data===d);
+        const v = entry?.valores?.[a.nome];
+        if(!v||v.valor===undefined||v.valor==='') return `<td style="padding:5px 8px;text-align:center;color:#aaa">—</td>`;
+        const n = parseFloat(String(v.valor).replace(',','.'));
+        let color='#1E6B3A',bg2='#E8F5EE';
+        if(!isNaN(n)){
+          if(minV!==null&&minV!==undefined&&n<minV){color='#856404';bg2='#FFF3CD';}
+          else if(maxV!==null&&maxV!==undefined&&n>maxV){color='#B02020';bg2='#FDECEA';}
+        }
+        const unit = v.unidade||a.unidade||'';
+        return `<td style="padding:5px 8px;text-align:center;background:${bg2};color:${color};font-weight:600">${fmt2(v.valor)}${unit?' <span style="font-size:8px;font-weight:400">'+unit+'</span>':''}</td>`;
+      }).join('');
+      tableHTML += `<tr style="background:${bg}">
+        <td style="padding:5px 8px;font-weight:500">${a.nome}${a.unidade?`<span style="font-size:8px;color:#888;margin-left:4px">${a.unidade}</span>`:''}</td>
+        <td style="padding:5px 8px;font-size:9px;color:#666">${ref||'—'}</td>
+        ${cells}
+      </tr>`;
     });
-    children.push(new Table({width:{size:9200,type:WidthType.DXA},columnWidths:[3000,1600,2800,1800],borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},rows:[hdrRow,...rows]}),esp(20));
   });
-  children.push(esp(120),new Paragraph({shading:{fill:"F0F4F8",type:ShadingType.CLEAR},spacing:{before:0,after:0},children:[new TextRun({text:'  Resumo: ',font:'Arial',size:19,bold:true,color:AZ_ESC}),new TextRun({text:`${totalIdeal} ideais  `,font:'Arial',size:19,bold:true,color:'155724'}),new TextRun({text:`${totalAlto} altos  `,font:'Arial',size:19,bold:true,color:'721C24'}),new TextRun({text:`${totalBaixo} baixos  `,font:'Arial',size:19,bold:true,color:'856404'}),new TextRun({text:`| Total: ${totalIdeal+totalAlto+totalBaixo}`,font:'Arial',size:18,color:'888888'})]}),esp(60),new Paragraph({alignment:AlignmentType.RIGHT,spacing:{before:40,after:0},children:[new TextRun({text:`Viana do Castelo, ${dataFmt}`,font:'Arial',size:17,italics:true,color:'888888'})]}));
-  const docObj=new Document({sections:[{
-    properties:{page:{size:{width:11906,height:16838},margin:{top:900,right:900,bottom:2000,left:900}}},
-    headers:{default:new Header({children:[
-      new Paragraph({shading:{fill:AZ_ESC,type:ShadingType.CLEAR},spacing:{before:0,after:0},children:[new TextRun({text:'  RELATÓRIO DE ANÁLISES CLÍNICAS',font:'Arial',size:24,bold:true,color:BRANCO})]}),
-      esp(60),
-      new Paragraph({spacing:{before:40,after:40},children:[new TextRun({text:'Utente:  ',font:'Arial',size:19,bold:true,color:AZ_ESC}),new TextRun({text:p.nome||'',font:'Arial',size:20,color:CINZA}),
-        ...(p.nif?[new TextRun({text:'   NIF:  ',font:'Arial',size:18,bold:true,color:AZ_ESC}),new TextRun({text:p.nif,font:'Arial',size:18,color:CINZA})]:[]),
-        new TextRun({text:'   Data: ',font:'Arial',size:17,bold:true,color:AZ_ESC}),new TextRun({text:dataFmt,font:'Arial',size:17,color:CINZA}),
-        new TextRun({text:'   Sexo: ',font:'Arial',size:17,bold:true,color:AZ_ESC}),new TextRun({text:sexo==='f'?'Feminino':'Masculino',font:'Arial',size:17,color:CINZA})]}),
-      new Paragraph({border:{bottom:{style:BorderStyle.SINGLE,size:8,color:"2E6DA4",space:1}},spacing:{before:0,after:0},children:[]}),esp(40),
-    ]})},
-    footers:{default:new Footer({children:[new Paragraph({border:{bottom:{style:BorderStyle.SINGLE,size:4,color:"CCCCCC",space:1}},spacing:{before:0,after:0},children:[]}),new Paragraph({spacing:{before:80,after:0},children:[new TextRun({text:'Assinatura / Vinheta do Médico:',font:'Arial',size:17,color:AZ_ESC})]})]})},
-    children
-  }]});
-  try{
-    const buf=await Packer.toBuffer(docObj);
-    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
-    saveAs(blob,`Resultados_${p.nome.replace(/\s+/g,'_')}_${data}.docx`);
-    showToast('Relatório gerado! ✓');
-  }catch(e){console.error(e);showToast('Erro ao gerar relatório.');}
+  tableHTML += '</tbody></table>';
+
+  const fullHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>
+      * { margin:0;padding:0;box-sizing:border-box; }
+      body { font-family: Arial, sans-serif; padding: 20px; color: #1e2d3d; }
+      .header { background:#1A3A5C; color:white; padding:12px 16px; margin-bottom:16px; }
+      .header h1 { font-size:16px; font-weight:700; }
+      .meta { font-size:10px; margin-top:6px; opacity:0.85; }
+      .legenda { display:flex;gap:12px;margin:8px 0 12px;font-size:9px; }
+      .leg { padding:2px 8px;border-radius:10px;font-weight:600; }
+      @media print { body { padding:10px; } }
+    </style>
+  </head><body>
+    <div class="header">
+      <h1>RELATÓRIO DE ANÁLISES CLÍNICAS</h1>
+      <div class="meta">
+        Utente: <b>${pac.nome}</b>${pac.nif?' &nbsp;|&nbsp; NIF: '+pac.nif:''}${pac.utente?' &nbsp;|&nbsp; SNS: '+pac.utente:''} &nbsp;|&nbsp;
+        Sexo: ${sexo==='f'?'Feminino':'Masculino'} &nbsp;|&nbsp; Emitido em: ${hoje}
+      </div>
+    </div>
+    <div class="legenda">
+      <span class="leg" style="background:#E8F5EE;color:#1E6B3A">✓ Ideal</span>
+      <span class="leg" style="background:#FDECEA;color:#B02020">↑ Alto</span>
+      <span class="leg" style="background:#FFF3CD;color:#856404">↓ Baixo</span>
+      <span style="font-size:9px;color:#888">Datas analisadas: ${datas.join(', ')}</span>
+    </div>
+    ${tableHTML}
+    <div style="margin-top:16px;font-size:9px;color:#aaa;border-top:1px solid #eee;padding-top:8px">
+      Relatório gerado pelo ClinicaScript em ${hoje}
+    </div>
+  </body></html>`;
+
+  // Open in new window and trigger print/save as PDF
+  const win = window.open('','_blank','width=1000,height=700');
+  win.document.write(fullHTML);
+  win.document.close();
+  win.onload = ()=>{
+    setTimeout(()=>{
+      win.print(); // browser print dialog — user can Save as PDF
+    }, 500);
+  };
+  showToast('PDF pronto — usa "Guardar como PDF" no diálogo de impressão');
 }
+
 
 // ─── NOTAS CLÍNICAS ──────────────────────────────────────────────────────────
 function renderNotasTab(){
