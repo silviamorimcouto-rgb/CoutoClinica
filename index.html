@@ -3081,7 +3081,8 @@ const ANALISES_DEFAULT={
   "Fezes e Outros":{color:"#6B5A1A",analises:["Pesq. Sangue Oculto","Ex. Parasitológico c/ Giardia","Calprotectina (fecal)"]}
 };
 const ECOS_DEFAULT=["Eco Tiróide","Eco Mamária (bilateral)","Eco Abdominal e Pélvica","Eco Pélvica Transvaginal"];
-const CATS_URINA=['Urina da Manhã','Urina 24 Horas','Fezes e Outros'];
+const CATS_URINA=['Urina da Manhã','Urina 24 Horas'];
+const CATS_FEZES=['Fezes e Outros','Exames Intestinais / Microbiota'];
 const AVATAR_COLORS=['#2E6DA4','#2E7D52','#8B1A6B','#B7610A','#1A5A6B','#6B3FA0','#C0392B','#5A6B1A'];
 
 // ─── STATE ─────────────────────────────────────────────────────────────────
@@ -4186,7 +4187,7 @@ async function gerarWord(nome,nif,seguro,local,sel,ecos,obs){
   const children=[];
   const analiseSangue=[];const analiseUrina=[];
   Object.keys(sel).filter(k=>sel[k]&&sel[k].length).forEach(cat=>{
-    if(CATS_URINA.includes(cat))sel[cat].forEach(a=>analiseUrina.push(a));
+    if(CATS_URINA.includes(cat)||CATS_FEZES.includes(cat))sel[cat].forEach(a=>analiseUrina.push(a));
     else sel[cat].forEach(a=>analiseSangue.push(a));
   });
   function criarColTexto(lista,w){
@@ -4203,7 +4204,15 @@ async function gerarWord(nome,nif,seguro,local,sel,ecos,obs){
     );
   }
   secao('ANÁLISES AO SANGUE',analiseSangue);
-  secao('ANÁLISES À URINA / FEZES',analiseUrina);
+  // Split urina vs fezes
+  const analiseUrinaOnly = [];
+  const analiseFezes = [];
+  Object.keys(sel).filter(k=>sel[k]&&sel[k].length).forEach(cat=>{
+    if(CATS_FEZES.includes(cat)) sel[cat].forEach(a=>analiseFezes.push(a));
+    else if(CATS_URINA.includes(cat)) sel[cat].forEach(a=>analiseUrinaOnly.push(a));
+  });
+  secao('ANÁLISES À URINA',analiseUrinaOnly);
+  secao('ANÁLISES ÀS FEZES',analiseFezes);
   if(temEcos){
     const cols=[[],[],[]];ecos.forEach((e,i)=>cols[i%3].push(e));
     children.push(
