@@ -2567,7 +2567,7 @@ textarea{resize:vertical;min-height:60px}
 .res-cell-nome{font-size:12.5px;font-weight:500;color:var(--gray-800);padding:4px 12px}
 .res-cell-ref{font-size:11px;color:var(--gray-400);padding:4px 8px}
 .res-cell-input{padding:3px 8px}
-.res-cell-input input{font-family:DM Sans,sans-serif;font-size:13px;padding:4px 8px;border-radius:5px;border:1px solid transparent;background:transparent;width:90px;text-align:right;outline:none;color:var(--gray-800)}
+.res-cell-input input{font-family:'DM Sans',sans-serif;font-size:13px;padding:4px 8px;border-radius:5px;border:1px solid var(--gray-200);background:var(--gray-50);width:90px;outline:none;color:var(--gray-800);transition:all 0.15s;cursor:text}
 .res-cell-input input:hover{border-color:var(--gray-200);background:white}
 .res-cell-input input:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px rgba(46,109,164,0.08)}
 .res-cell-badge{padding:3px 8px;text-align:center}
@@ -2576,8 +2576,8 @@ textarea{resize:vertical;min-height:60px}
 .res-empty-state{text-align:center;padding:60px 20px;color:var(--gray-400);font-size:13px}
 @keyframes pulse-btn{0%,100%{opacity:1}50%{opacity:0.7}}
 .res-tbl tr.editing td{background:#FFF8E1!important}
-.res-cell-input input{font-family:'DM Sans',sans-serif;font-size:13px;padding:4px 8px;border-radius:5px;border:1px solid transparent;background:transparent;width:90px;outline:none;color:var(--gray-800);transition:all 0.15s}
-.res-cell-input input:hover{border-color:var(--gray-200);background:white}
+.res-cell-input input{font-family:'DM Sans',sans-serif;font-size:13px;padding:4px 8px;border-radius:5px;border:1px solid var(--gray-200);background:var(--gray-50);width:90px;outline:none;color:var(--gray-800);transition:all 0.15s;cursor:text}
+.res-cell-input input:hover{border-color:var(--blue);background:white}
 .res-cell-input input:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px rgba(46,109,164,0.08)}
 .toast{position:fixed;bottom:24px;right:24px;background:#1A3A5C;color:white;padding:12px 18px;border-radius:9px;font-size:13px;z-index:200;opacity:0;transform:translateY(10px);transition:all 0.22s;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.2)}
 .toast.show{opacity:1;transform:translateY(0)}
@@ -2772,7 +2772,7 @@ textarea{resize:vertical;min-height:60px}
                   <button class="btn btn-secondary" onclick="toggleEvoGrid()" id="btn-evo-grid" style="font-size:12px;padding:5px 11px">Evolução</button>
                   <button class="btn btn-secondary" onclick="toggleTabMaster()" style="font-size:12px;padding:5px 11px">Tabela Master</button>
                   <button class="btn btn-secondary" onclick="gerarRelatorioResultados()" style="font-size:12px;padding:5px 11px">Relatório</button>
-                  <button class="btn btn-secondary" id="btn-editar-data-toolbar" onclick="activarModoEdicao()" style="font-size:12px;padding:5px 11px;display:none">✏ Editar</button>
+                  <button class="btn btn-secondary" id="btn-editar-data-toolbar" onclick="activarModoEdicao()" style="font-size:12px;padding:5px 11px;display:none;background:#FFF3CD;color:#856404;border-color:#FFD96A">✏ Editar / Adicionar análises</button>
                   <button class="btn btn-danger" id="btn-apagar-data-toolbar" onclick="apagarDataActiva()" style="font-size:12px;padding:5px 11px;display:none">🗑 Apagar data</button>
                   <button class="btn btn-success" id="btn-guardar-res" onclick="guardarResultados()" style="font-size:12px;padding:5px 11px">Guardar</button>
                 </div>
@@ -3730,7 +3730,7 @@ function renderResTabela(){
         const badgeId = 'badge-' + a.nome.replace(/[^a-zA-Z0-9]/g,'_');
         const nomeSafe = a.nome;
         // Dim rows with no value in view mode
-        const rowStyle = (!modoEntrada && !val) ? 'opacity:0.35' : '';
+        const rowStyle = '';
         html += `<tr id="${rowId}" style="${rowStyle}">
           <td class="res-cell-nome">${a.nome}${unit?`<span style="font-size:10px;color:var(--gray-400);margin-left:5px">${unit}</span>`:''}</td>
           <td class="res-cell-ref">${ref||'—'}</td>
@@ -3749,15 +3749,7 @@ function renderResTabela(){
     });
   }
 
-  // In view mode: button to add more
-  if(!modoEntrada){
-    html += `<tr><td colspan="4" style="padding:10px 12px">
-      <button class="btn btn-secondary" onclick="activarModoEdicao()" style="font-size:12px;padding:5px 14px;width:100%">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg>
-        Adicionar / editar mais análises
-      </button>
-    </td></tr>`;
-  }
+
 
   html += '</tbody></table>';
   container.innerHTML = html;
