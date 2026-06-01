@@ -2594,6 +2594,128 @@ textarea{resize:vertical;min-height:60px}
 .loading-overlay.show{display:flex}
 .loading-spinner{width:40px;height:40px;border:3px solid var(--gray-200);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── MOBILE RESPONSIVE ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Sidebar collapses to bottom nav */
+  .sidebar {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    height: 60px !important;
+    flex-direction: row !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    z-index: 1000;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-right: none !important;
+  }
+  .sidebar-brand { display: none !important; }
+  .sidebar-section-label { display: none !important; }
+  .sidebar .nav-item {
+    flex: 1 !important;
+    flex-direction: column !important;
+    font-size: 9px !important;
+    padding: 8px 4px !important;
+    gap: 3px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    border-radius: 0 !important;
+    text-align: center !important;
+  }
+  .sidebar .nav-item svg { width: 20px !important; height: 20px !important; }
+
+  /* Main content padding for bottom nav */
+  .main { margin-left: 0 !important; padding-bottom: 70px !important; }
+
+  /* Topbar */
+  .topbar { flex-wrap: wrap !important; gap: 8px !important; padding: 12px !important; }
+  .topbar-title { font-size: 16px !important; }
+
+  /* Profile header */
+  #view-perfil .profile-header {
+    flex-wrap: wrap !important;
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+  .profile-tabs {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 0 12px !important;
+    gap: 0 !important;
+  }
+  .profile-tab {
+    white-space: nowrap !important;
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Patient cards */
+  .pac-grid {
+    grid-template-columns: 1fr !important;
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+
+  /* Resultados split layout → stack */
+  #pane-resultados > div {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+  #pane-resultados > div > div:first-child {
+    width: 100% !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--gray-200) !important;
+    max-height: 160px !important;
+  }
+  #res-datas-lista { display: flex !important; flex-direction: row !important; overflow-x: auto !important; }
+  .res-data-item { min-width: 120px !important; border-bottom: none !important; border-right: 1px solid var(--gray-100) !important; }
+
+  /* Results table toolbar */
+  #pane-resultados .topbar, [style*="res-topbar"] {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  /* Modals */
+  .modal {
+    width: 95vw !important;
+    max-height: 90vh !important;
+    margin: 5vh auto !important;
+    overflow-y: auto !important;
+  }
+  .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+  .modal { border-radius: 16px 16px 0 0 !important; margin: 0 !important; width: 100% !important; max-height: 92vh !important; }
+
+  /* Suplementação */
+  #pane-suplementos > div { flex-direction: column !important; }
+  #supl-hist-panel { width: 100% !important; }
+
+  /* Prescrição — análises grid */
+  .analises-grid { grid-template-columns: 1fr !important; }
+
+  /* Tables overflow */
+  .res-tbl, .master-table { font-size: 11px !important; }
+  .res-cell-nome { font-size: 11px !important; }
+  #res-analises-container, #master-table-content { overflow-x: auto !important; }
+
+  /* Content padding */
+  .content { padding: 10px !important; }
+  .card { border-radius: 8px !important; }
+
+  /* Hide less important cols on mobile */
+  .res-cell-ref { display: none !important; }
+}
+
+@media (max-width: 480px) {
+  .topbar-title { font-size: 14px !important; }
+  .btn { font-size: 12px !important; padding: 7px 10px !important; }
+  .profile-tab { font-size: 11px !important; padding: 8px 10px !important; }
+}
 </style>
 </head>
 <body>
@@ -2879,7 +3001,10 @@ textarea{resize:vertical;min-height:60px}
               <div class="card" style="position:sticky;top:0">
                 <div class="card-header" style="background:var(--gray-50);padding:10px 14px">
                   <h2 style="font-size:12px">Histórico de Protocolos</h2>
-                  <button onclick="fecharHistoricoSupl()" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:16px">×</button>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <button onclick="exportarProtocoloSelecionado()" title="Exportar protocolo seleccionado" style="background:none;border:1px solid var(--gray-200);border-radius:5px;cursor:pointer;padding:3px 7px;font-size:11px;color:var(--blue)">⬇ PDF</button>
+                    <button onclick="fecharHistoricoSupl()" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:16px">×</button>
+                  </div>
                 </div>
                 <div id="supl-hist-lista" style="max-height:500px;overflow-y:auto"></div>
               </div>
@@ -4511,7 +4636,7 @@ async function gerarRelatorioResultados(){
       <h1>RELATÓRIO DE ANÁLISES CLÍNICAS</h1>
       <div class="meta">
         Utente: <b>${pac.nome}</b>${pac.nif?' &nbsp;|&nbsp; NIF: '+pac.nif:''}${pac.utente?' &nbsp;|&nbsp; SNS: '+pac.utente:''} &nbsp;|&nbsp;
-        Sexo: ${sexo==='f'?'Feminino':'Masculino'} &nbsp;|&nbsp; Emitido em: ${hoje}
+        Sexo: ${sexo==='f'?'Feminino':'Masculino'} &nbsp;|&nbsp; ${pac.nasc ? 'Idade: '+(new Date().getFullYear()-new Date(pac.nasc+'T12:00:00').getFullYear()-(new Date()<new Date(new Date().getFullYear()+'-'+pac.nasc.slice(5,10)+'T12:00:00')&&new Date(pac.nasc+'T12:00:00').getFullYear()!==new Date().getFullYear()?1:0))+' anos &nbsp;|&nbsp; ':''} Emitido em: ${hoje}
       </div>
     </div>
     <div class="legenda">
@@ -4758,7 +4883,7 @@ function carregarProtocolo(data){
   renderSuplLista();
 }
 
-const BIBLIOTECA_SUPL_BASE = [{"cat": "Vitaminas Lipossolúveis", "items": [{"nome": "Vitamina A (Retinol)", "dose": "5000-10000", "unidade": "UI", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Saúde visual, imunidade, pele", "notas": "Evitar doses elevadas em grávidas"}, {"nome": "Vitamina D3", "dose": "2000-5000", "unidade": "UI", "freq": "Diária", "forma": "Cápsula/gota", "indicacoes": "Imunidade, ossos, tiróide, humor", "notas": "Tomar com K2 e com refeição gordurosa"}, {"nome": "Vitamina K2 (MK-7)", "dose": "100-200", "unidade": "mcg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Saúde óssea e cardiovascular, potencializa D3", "notas": "Tomar com D3"}, {"nome": "Vitamina E (Tocoferóis mistos)", "dose": "200-400", "unidade": "UI", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Antioxidante, saúde cardiovascular", "notas": "Preferir tocoferóis mistos a alfa-tocoferol isolado"}]}, {"cat": "Vitaminas Hidrossolúveis", "items": [{"nome": "Vitamina C (Ácido Ascórbico)", "dose": "500-2000", "unidade": "mg", "freq": "Diária", "forma": "Comprimido/pó", "indicacoes": "Imunidade, colágeno, antioxidante", "notas": "Dividir a dose ao longo do dia"}, {"nome": "Vitamina B1 (Tiamina)", "dose": "50-100", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Metabolismo energético, sistema nervoso", "notas": ""}, {"nome": "Vitamina B2 (Riboflavina)", "dose": "25-50", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Energia mitocondrial, metabolismo", "notas": "Urina pode ficar amarela — normal"}, {"nome": "Vitamina B3 (Niacina)", "dose": "250-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Colesterol, energia, pele", "notas": "Flush possível com niacina regular — usar inositol hexanicotinato"}, {"nome": "Vitamina B5 (Ácido Pantoténico)", "dose": "250-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Glândulas supra-renais, energia", "notas": ""}, {"nome": "Vitamina B6 (Piridoxina)", "dose": "25-100", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Hormonal, sistema nervoso, imunidade", "notas": "Doses altas > 200mg/dia podem causar neuropatia"}, {"nome": "Vitamina B7 (Biotina)", "dose": "1000-5000", "unidade": "mcg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Cabelo, unhas, metabolismo glucídico", "notas": "Pode interferir com análises tireoideias"}, {"nome": "Vitamina B9 (Folato / Metilfolato)", "dose": "400-1000", "unidade": "mcg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Metilação, gravidez, humor, cardiovascular", "notas": "Preferir metilfolato (5-MTHF) em vez de ácido fólico sintético"}, {"nome": "Vitamina B12 (Metilcobalamina)", "dose": "500-2000", "unidade": "mcg", "freq": "Diária", "forma": "Sublingual/cápsula", "indicacoes": "Energia, nervo, metilação, anemia", "notas": "Preferir metilcobalamina ou adenosilcobalamina"}]}, {"cat": "Minerais", "items": [{"nome": "Magnésio (Glicinato/Malato)", "dose": "200-400", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Sono, tensão muscular, stress, tiróide, insulina", "notas": "Glicinato para sono/ansiedade; Malato para energia"}, {"nome": "Zinco (Bisglicinato)", "dose": "15-30", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Imunidade, testosterona, tiróide, pele", "notas": "Tomar sem estômago vazio; equilibrar com cobre"}, {"nome": "Cobre", "dose": "1-2", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Equilíbrio com zinco, colagénio, ferro", "notas": "Não suplementar sem necessidade — avaliar análises"}, {"nome": "Selénio (Selenometionina)", "dose": "100-200", "unidade": "mcg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Tiróide, antioxidante, imunidade", "notas": "Não ultrapassar 400mcg/dia"}, {"nome": "Ferro (Bisglicinato)", "dose": "25-50", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Anemia, energia, função cognitiva", "notas": "Tomar em jejum com vitamina C; pode causar obstipação"}, {"nome": "Cálcio (Citrato)", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Ossos, dentes, contracção muscular", "notas": "Dividir doses; tomar com K2 e D3; preferir citrato"}, {"nome": "Iodo", "dose": "150-500", "unidade": "mcg", "freq": "Diária", "forma": "Gota/cápsula", "indicacoes": "Tiróide, mama, metabolismo", "notas": "Iniciar com dose baixa; monitorizar TSH"}, {"nome": "Crómio", "dose": "200-400", "unidade": "mcg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Resistência à insulina, controlo glicémico", "notas": ""}, {"nome": "Manganês", "dose": "2-5", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Antioxidante, ossos, metabolismo", "notas": ""}]}, {"cat": "Ácidos Gordos", "items": [{"nome": "Omega-3 (EPA/DHA)", "dose": "1000-3000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Inflamação, cardiovascular, cérebro, triglicéridos", "notas": "Preferir forma re-esterificada ou fosfolipídios; tomar com refeição"}, {"nome": "GLA (Ácido Gama-Linolénico)", "dose": "240-480", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Pele, hormonal, inflamação", "notas": "Óleo de onagra ou borragem"}]}, {"cat": "Aminoácidos", "items": [{"nome": "L-Triptofano", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Sono, humor, serotonina", "notas": "Tomar à noite, longe de proteínas"}, {"nome": "L-Taurina", "dose": "500-2000", "unidade": "mg", "freq": "Diária", "forma": "Pó/cápsula", "indicacoes": "Cardiovascular, fígado, ansiedade, sono", "notas": ""}, {"nome": "L-Glutamina", "dose": "2000-5000", "unidade": "mg", "freq": "Diária", "forma": "Pó", "indicacoes": "Intestino, imunidade, músculo", "notas": "Tomar em jejum"}, {"nome": "NAC (N-Acetil-Cisteína)", "dose": "600-1200", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Glutationa, fígado, muco, antioxidante", "notas": ""}, {"nome": "L-Tirosina", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Tiróide (T3/T4), dopamina, energia, foco", "notas": "Tomar longe de refeições"}]}, {"cat": "Antioxidantes e Fitoquímicos", "items": [{"nome": "Coenzima Q10 (Ubiquinol)", "dose": "100-300", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Energia mitocondrial, cardiovascular, antienvelhecimento", "notas": "Tomar com refeição gordurosa; preferir ubiquinol"}, {"nome": "Resveratrol", "dose": "250-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Antienvelhecimento, cardiovascular, antioxidante", "notas": ""}, {"nome": "Curcumina (com Bioperina)", "dose": "500-1500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Inflamação, articulações, fígado, cérebro", "notas": "Tomar com pimenta preta para absorção"}, {"nome": "Quercetina", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Antialérgico, antioxidante, antiviral", "notas": ""}, {"nome": "Ácido Alfa-Lipoico", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Antioxidante, neuroprotector, glicémia", "notas": ""}, {"nome": "Glutationa (Reduzida/Lipossomal)", "dose": "250-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula/lipossomal", "indicacoes": "Antioxidante master, detox, imunidade", "notas": "Preferir forma lipossomal ou S-acetil-glutationa"}]}, {"cat": "Suporte Digestivo", "items": [{"nome": "Probiótico Multi-estirpe", "dose": "10-50", "unidade": "bil UFC", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Microbiota, imunidade, trânsito intestinal", "notas": "Tomar em jejum ou longe de antibióticos"}, {"nome": "Enzimas Digestivas", "dose": "1", "unidade": "cápsula", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Digestão, absorção de nutrientes, inchaço", "notas": "Tomar no início das refeições"}, {"nome": "Fibra (Psílio/Inulina)", "dose": "5-10", "unidade": "g", "freq": "Diária", "forma": "Pó", "indicacoes": "Trânsito intestinal, microbiota, glicémia", "notas": "Beber bastante água"}, {"nome": "Cálcio-D-Glucarato", "dose": "500-1500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Detox estrogénico, fígado", "notas": ""}]}, {"cat": "Suporte Hormonal e Adaptogénios", "items": [{"nome": "Ashwagandha (KSM-66)", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Cortisol, stress, tiróide, testosterona, sono", "notas": "Tomar à noite; evitar em hiperestimulação tiroideia"}, {"nome": "Maca", "dose": "1500-3000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula/pó", "indicacoes": "Energia, libido, hormonal, menopausa", "notas": ""}, {"nome": "Rhodiola Rosea", "dose": "200-400", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Fadiga, stress, performance cognitiva", "notas": "Tomar de manhã; não tomar à noite"}, {"nome": "DIM (Diindolilmetano)", "dose": "100-300", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Metabolismo estrogénico, hormonal", "notas": ""}, {"nome": "Myo-Inositol", "dose": "2000-4000", "unidade": "mg", "freq": "Diária", "forma": "Pó", "indicacoes": "SOP, resistência à insulina, tiróide, ansiedade", "notas": "Dividir em 2 tomas"}, {"nome": "DHEA", "dose": "5-25", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Hormonal, energia, imunidade, libido", "notas": "Apenas com análises; não usar sem indicação"}]}, {"cat": "Suporte Neurológico", "items": [{"nome": "Magnésio L-Treonato", "dose": "2000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Memória, cognição, sono, ansiedade", "notas": "Tomar à noite"}, {"nome": "Fosfatidilserina", "dose": "100-300", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Memória, foco, cortisol, envelhecimento cerebral", "notas": ""}, {"nome": "Lion's Mane (Juba de Leão)", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Neuroplasticidade, memória, NGF", "notas": ""}, {"nome": "Bacopa Monnieri", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Memória, ansiedade, foco", "notas": "Efeito progressivo — mínimo 8 semanas"}]}];
+const BIBLIOTECA_SUPL_BASE = [{"cat": "Vitaminas Lipossolúveis", "items": [{"nome": "Vitamina A (Retinol)", "dose": "5000-10000", "unidade": "UI", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Saúde visual, imunidade, pele", "notas": "Evitar doses elevadas em grávidas"}, {"nome": "Vitamina D3", "dose": "2000-5000", "unidade": "UI", "freq": "Diária", "forma": "Cápsula/gota", "indicacoes": "Imunidade, ossos, tiróide, humor, sistema hormonal", "notas": "Tomar com K2 e com refeição gordurosa"}, {"nome": "Vitamina K2 (MK-7)", "dose": "100-200", "unidade": "mcg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Saúde óssea e cardiovascular, potencializa D3", "notas": "Tomar com D3"}, {"nome": "Vitamina E (Tocoferóis mistos)", "dose": "200-400", "unidade": "UI", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Antioxidante, saúde cardiovascular", "notas": "Preferir tocoferóis mistos a alfa-tocoferol isolado"}]}, {"cat": "Vitaminas Hidrossolúveis", "items": [{"nome": "Vitamina C (Ácido Ascórbico)", "dose": "500-2000", "unidade": "mg", "freq": "Diária", "forma": "Comprimido/pó", "indicacoes": "Imunidade, colágeno, antioxidante, pele", "notas": "Dividir a dose ao longo do dia"}, {"nome": "Vitamina B1 (Tiamina)", "dose": "50-100", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Metabolismo energético, sistema nervoso", "notas": ""}, {"nome": "Vitamina B2 (Riboflavina)", "dose": "25-50", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Energia mitocondrial, metabolismo", "notas": "Urina pode ficar amarela — normal"}, {"nome": "Vitamina B3 (Niacina)", "dose": "250-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Colesterol, energia, pele", "notas": "Flush possível com niacina regular"}, {"nome": "Vitamina B5 (Ácido Pantoténico)", "dose": "250-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Glândulas supra-renais, energia", "notas": ""}, {"nome": "Vitamina B6 (Piridoxina)", "dose": "25-100", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Hormonal, PMS, sistema nervoso, imunidade", "notas": "Doses > 200mg/dia podem causar neuropatia"}, {"nome": "Vitamina B7 (Biotina)", "dose": "1000-5000", "unidade": "mcg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Cabelo, unhas, pele, metabolismo glucídico", "notas": "Pode interferir com análises tireoideias"}, {"nome": "Vitamina B9 (Metilfolato)", "dose": "400-1000", "unidade": "mcg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Metilação, gravidez, humor, cardiovascular", "notas": "Preferir 5-MTHF em vez de ácido fólico sintético"}, {"nome": "Vitamina B12 (Metilcobalamina)", "dose": "500-2000", "unidade": "mcg", "freq": "Diária", "forma": "Sublingual/cápsula", "indicacoes": "Energia, nervo, metilação, anemia", "notas": "Preferir metilcobalamina ou adenosilcobalamina"}]}, {"cat": "Minerais", "items": [{"nome": "Magnésio Bisglicinato", "dose": "200-400", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Sono, ansiedade, tensão muscular, stress, tiróide", "notas": "Preferir para sono e relaxamento"}, {"nome": "Magnésio Malato", "dose": "200-400", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Energia, fadiga muscular, fibromialgia", "notas": "Preferir para energia diurna"}, {"nome": "Magnésio L-Treonato", "dose": "1500-2000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Cognição, memória, sono, ansiedade", "notas": "Única forma que atravessa barreira hematoencefálica"}, {"nome": "Zinco Bisglicinato", "dose": "15-30", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Imunidade, testosterona, tiróide, pele, próstata", "notas": "Tomar sem estômago vazio; equilibrar com cobre"}, {"nome": "Zinco-Carnosina", "dose": "75-150", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Reparação da mucosa intestinal, Helicobacter pylori", "notas": "Forma específica para saúde intestinal"}, {"nome": "Cobre", "dose": "1-2", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Equilíbrio com zinco, colagénio, ferro", "notas": "Não suplementar sem necessidade — avaliar análises"}, {"nome": "Selénio (Selenometionina)", "dose": "100-200", "unidade": "mcg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Tiróide, antioxidante, imunidade", "notas": "Não ultrapassar 400mcg/dia"}, {"nome": "Ferro Bisglicinato", "dose": "25-50", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Anemia, energia, função cognitiva, tiróide", "notas": "Tomar em jejum com vitamina C; pode causar obstipação"}, {"nome": "Cálcio Citrato", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Ossos, dentes, contracção muscular", "notas": "Dividir doses; preferir citrato; tomar com K2 e D3"}, {"nome": "Iodo", "dose": "150-500", "unidade": "mcg", "freq": "Diária", "forma": "Gota/cápsula", "indicacoes": "Tiróide (quando indicado), mama, metabolismo", "notas": "Iniciar com dose baixa; monitorizar TSH"}, {"nome": "Crómio", "dose": "200-400", "unidade": "mcg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Resistência à insulina, controlo glicémico", "notas": ""}, {"nome": "Boro", "dose": "3-6", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Testosterona, saúde óssea, metabolismo de vitamina D", "notas": ""}, {"nome": "Silício", "dose": "10-20", "unidade": "mg", "freq": "Diária", "forma": "Cápsula/pó", "indicacoes": "Pele, cabelo, unhas, ossos, articulações", "notas": ""}]}, {"cat": "Ácidos Gordos", "items": [{"nome": "Ómega-3 (EPA/DHA)", "dose": "1000-3000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Inflamação, cardiovascular, cérebro, triglicéridos, humor, longevidade", "notas": "Tomar com refeição; preferir forma re-esterificada"}, {"nome": "GLA (Óleo de prímula/borragem)", "dose": "240-480", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Pele, hormonal feminino (PMS, menopausa), inflamação", "notas": ""}, {"nome": "Óleo de sementes de abóbora", "dose": "1000-2000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Saúde da próstata, bexiga, cabelo", "notas": ""}]}, {"cat": "Aminoácidos", "items": [{"nome": "L-Glutamina", "dose": "2000-5000", "unidade": "mg", "freq": "Diária", "forma": "Pó", "indicacoes": "Reparação intestinal, imunidade, músculo", "notas": "Tomar em jejum"}, {"nome": "L-Tirosina", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Tiróide (T3/T4), dopamina, concentração, energia", "notas": "Tomar longe de refeições, de manhã"}, {"nome": "NAC (N-Acetil-Cisteína)", "dose": "600-1200", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Glutationa, fígado, muco, antioxidante, desintoxicação", "notas": ""}, {"nome": "L-Triptofano", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Sono, humor, serotonina", "notas": "Tomar à noite, longe de proteínas"}, {"nome": "L-Taurina", "dose": "500-2000", "unidade": "mg", "freq": "Diária", "forma": "Pó/cápsula", "indicacoes": "Cardiovascular, fígado, ansiedade, sono, mitocôndrias", "notas": ""}, {"nome": "L-Teanina", "dose": "100-200", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Relaxamento sem sedação, sono, ansiedade, concentração", "notas": "Sinergia com cafeína"}, {"nome": "Glicina", "dose": "2000-5000", "unidade": "mg", "freq": "Diária", "forma": "Pó", "indicacoes": "Sono, colagénio, fígado (fase II), detox, articulações", "notas": "Tomar antes de dormir"}, {"nome": "N-Acetil-Glucosamina", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Mucosa intestinal, articulações", "notas": ""}, {"nome": "Acetil-L-Carnitina", "dose": "500-1500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Energia mitocondrial, cognição, neuroprotecção", "notas": "Tomar de manhã"}, {"nome": "Cafeína + L-Teanina", "dose": "100+200", "unidade": "mg", "freq": "Conforme necessário", "forma": "Cápsula", "indicacoes": "Concentração, foco, energia sem jitters", "notas": "Rácio ideal 1:2 cafeína:teanina"}]}, {"cat": "Antioxidantes e Fitoquímicos", "items": [{"nome": "Coenzima Q10 (Ubiquinol)", "dose": "100-300", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Energia mitocondrial, cardiovascular, longevidade, fertilidade", "notas": "Preferir ubiquinol; tomar com refeição gordurosa"}, {"nome": "Curcumina com Bioperina", "dose": "500-1500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Inflamação, articulações, fígado, cérebro, longevidade", "notas": "Tomar com pimenta preta; formulações liposomais têm maior biodisponibilidade"}, {"nome": "Resveratrol", "dose": "250-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Longevidade, cardiovascular, antioxidante, cérebro", "notas": ""}, {"nome": "Quercetina", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Antialérgico, antioxidante, antiviral, anti-inflamatório", "notas": ""}, {"nome": "Astaxantina", "dose": "4-12", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Antioxidante potente, pele, olhos, cardiovascular, longevidade", "notas": "Tomar com refeição gordurosa"}, {"nome": "Ácido Alfa-Lipoico", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Antioxidante universal, neuroprotecção, resistência à insulina, energia", "notas": ""}, {"nome": "Glutationa Lipossomal", "dose": "250-500", "unidade": "mg", "freq": "Diária", "forma": "Lipossomal/cápsula", "indicacoes": "Antioxidante master, detox hepático, imunidade, pele", "notas": "Preferir forma lipossomal ou S-acetil-glutationa"}, {"nome": "EGCG (Extrato de chá verde)", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Antioxidante, metabolismo, anti-inflamatório, cardiovascular", "notas": ""}, {"nome": "Boswellia", "dose": "300-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Anti-inflamatório, articulações, intestino, cérebro", "notas": "Preferir extrato com AKBA ≥30%"}, {"nome": "Sulforafano", "dose": "10-30", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Detox (fase II), anticancerígeno, fígado, longevidade", "notas": "Brócolo germinado ou extrato estabilizado"}, {"nome": "Berberina", "dose": "500-1500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Resistência à insulina, colesterol, microbiota, glicémia", "notas": "Tomar antes das refeições; pode interagir com medicamentos"}, {"nome": "Silimarina (Cardo-mariano)", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Hepatoprotector, detox hepático, antioxidante", "notas": ""}, {"nome": "Licopeno", "dose": "10-30", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Próstata, cardiovascular, antioxidante", "notas": ""}]}, {"cat": "Saúde Intestinal e Microbiota", "items": [{"nome": "Probiótico Multicepas", "dose": "10-50", "unidade": "bil UFC", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Microbiota, imunidade, trânsito intestinal, saúde mental", "notas": "Tomar em jejum; manter refrigerado"}, {"nome": "Saccharomyces boulardii", "dose": "250-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Diarreia, disbiose, antibioterapia, C. difficile", "notas": "Pode ser tomado durante antibioterapia"}, {"nome": "Lactobacillus rhamnosus GG", "dose": "5-10", "unidade": "bil UFC", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Imunidade intestinal, diarreia, eczema, alergias", "notas": ""}, {"nome": "Bifidobacterium lactis", "dose": "5-10", "unidade": "bil UFC", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Trânsito intestinal, imunidade, redução de inflamação", "notas": ""}, {"nome": "Colostro Bovino", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Pó/cápsula", "indicacoes": "Reparação intestinal, imunidade, permeabilidade intestinal", "notas": "Tomar em jejum"}, {"nome": "Psyllium", "dose": "5-10", "unidade": "g", "freq": "Diária", "forma": "Pó", "indicacoes": "Trânsito intestinal, microbiota, glicémia, colesterol", "notas": "Beber abundante água; tomar longe de medicamentos"}, {"nome": "Inulina", "dose": "3-8", "unidade": "g", "freq": "Diária", "forma": "Pó", "indicacoes": "Prebiótico, microbiota, trânsito intestinal", "notas": "Iniciar com dose baixa para evitar flatulência"}, {"nome": "Goma Guar Parcialmente Hidrolisada", "dose": "5-10", "unidade": "g", "freq": "Diária", "forma": "Pó", "indicacoes": "Prebiótico, SII, trânsito intestinal, glicémia", "notas": "Bem tolerada mesmo em intestino sensível"}, {"nome": "Enzimas Digestivas", "dose": "1", "unidade": "cápsula", "freq": "Às refeições", "forma": "Cápsula", "indicacoes": "Má digestão, absorção de nutrientes, inchaço, flatulência", "notas": "Tomar no início das refeições"}, {"nome": "Betaína HCl", "dose": "650-1300", "unidade": "mg", "freq": "Às refeições", "forma": "Cápsula", "indicacoes": "Hipocloridria, má digestão de proteínas (casos seleccionados)", "notas": "Contraindicado em úlcera ou gastrite activa"}, {"nome": "Extrato de Alcachofra", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Digestão, fígado, colesterol, SII", "notas": ""}, {"nome": "Gengibre", "dose": "250-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Náuseas, digestão, anti-inflamatório, motilidade gástrica", "notas": ""}, {"nome": "Cálcio-D-Glucarato", "dose": "500-1500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Detox estrogénico, fígado, prevenção oncológica", "notas": ""}]}, {"cat": "Energia e Mitocôndrias", "items": [{"nome": "PQQ (Pirroloquinolina quinona)", "dose": "10-20", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Biogénese mitocondrial, cognição, neuroprotecção, longevidade", "notas": "Sinergia com CoQ10"}, {"nome": "NAD+ / Nicotinamida Ribosídeo", "dose": "250-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Longevidade, energia celular, reparação ADN, envelhecimento", "notas": "Tomar de manhã"}, {"nome": "NMN (Mononucleotídeo de Nicotinamida)", "dose": "250-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula/sublingual", "indicacoes": "Longevidade, energia, metabolismo, anti-envelhecimento", "notas": "Tomar de manhã em jejum"}, {"nome": "D-Ribose", "dose": "5000-10000", "unidade": "mg", "freq": "Diária", "forma": "Pó", "indicacoes": "Energia celular (ATP), fadiga crónica, fibromialgia, cardíaco", "notas": "Dividir em 2-3 tomas"}, {"nome": "Espermidina", "dose": "1-3", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Autofagia, longevidade, saúde cerebral, cardiovascular", "notas": "Tomar com refeição"}]}, {"cat": "Suporte Neurológico e Cognição", "items": [{"nome": "Lion's Mane (Juba de Leão)", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Neuroplasticidade, memória, NGF, concentração", "notas": ""}, {"nome": "Citicolina (CDP-Colina)", "dose": "250-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Memória, foco, acetilcolina, neuroprotecção", "notas": ""}, {"nome": "Alpha-GPC", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Acetilcolina, memória, performance cognitiva, força muscular", "notas": ""}, {"nome": "Fosfatidilserina", "dose": "100-300", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Memória, foco, cortisol, envelhecimento cerebral", "notas": ""}, {"nome": "Bacopa Monnieri", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Memória, ansiedade, foco, neuroprotecção", "notas": "Efeito progressivo — mínimo 8 semanas"}, {"nome": "Melatonina", "dose": "0.5-5", "unidade": "mg", "freq": "Noturna", "forma": "Comprimido/gota", "indicacoes": "Sono, jet lag, antioxidante, imunidade, longevidade", "notas": "Iniciar com dose baixa (0.5mg); tomar 30-60min antes de dormir"}, {"nome": "Passiflora", "dose": "200-400", "unidade": "mg", "freq": "Noturna", "forma": "Cápsula/tintura", "indicacoes": "Sono, ansiedade, relaxamento", "notas": ""}, {"nome": "Valeriana", "dose": "300-600", "unidade": "mg", "freq": "Noturna", "forma": "Cápsula/tintura", "indicacoes": "Sono, ansiedade, qualidade do sono profundo", "notas": "Efeito cumulativo — usar durante 2-4 semanas"}]}, {"cat": "Adaptogénios e Suporte Adrenal", "items": [{"nome": "Ashwagandha (KSM-66)", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Cortisol, stress, tiróide, testosterona, sono, resistência", "notas": "Tomar à noite; evitar em hipertiroidismo"}, {"nome": "Rhodiola Rosea", "dose": "200-400", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Fadiga, stress, performance cognitiva, humor", "notas": "Tomar de manhã; não tomar à noite"}, {"nome": "Eleuthero (Ginseng Siberiano)", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Energia, stress, imunidade, adaptação", "notas": ""}, {"nome": "Schisandra", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula/tintura", "indicacoes": "Fígado, stress, energia, adaptação, cognição", "notas": ""}, {"nome": "Ginseng Coreano (Panax)", "dose": "200-400", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Energia, imunidade, função cognitiva, libido, diabetes", "notas": "Evitar à noite; ciclos de uso recomendados"}, {"nome": "Tulsi (Manjericão Sagrado)", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula/chá", "indicacoes": "Stress, ansiedade, cortisol, anti-inflamatório, imunidade", "notas": ""}, {"nome": "Maca", "dose": "1500-3000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula/pó", "indicacoes": "Energia, libido, hormonal, menopausa, fertilidade", "notas": ""}]}, {"cat": "Saúde Hormonal Masculina", "items": [{"nome": "Tongkat Ali", "dose": "200-400", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Testosterona, libido, fertilidade masculina, energia", "notas": "Preferir extracto 100:1 ou LJ100"}, {"nome": "Fadogia Agrestis", "dose": "400-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Testosterona, libido (evidência limitada)", "notas": "Usar ciclos; segurança a longo prazo ainda em estudo"}, {"nome": "Saw Palmetto", "dose": "320", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Próstata, DHT, calvície, hiperplasia benigna prostática", "notas": ""}, {"nome": "Beta-Sitosterol", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Próstata, colesterol, imunidade", "notas": ""}]}, {"cat": "Saúde Hormonal Feminina", "items": [{"nome": "Vitex Agnus-Castus", "dose": "20-40", "unidade": "mg", "freq": "Diária", "forma": "Cápsula/tintura", "indicacoes": "Ciclo menstrual, PMS, prolactina, menopausa, fertilidade", "notas": "Tomar de manhã; efeito após 3 meses"}, {"nome": "DIM (Diindolilmetano)", "dose": "100-300", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Metabolismo estrogénico, endometriose, SOP, prevenção oncológica", "notas": ""}, {"nome": "Indol-3-Carbinol", "dose": "200-400", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Detox estrogénico, saúde mamária, hormonal", "notas": "Precursor do DIM"}, {"nome": "Myo-Inositol", "dose": "2000-4000", "unidade": "mg", "freq": "Diária", "forma": "Pó", "indicacoes": "SOP, resistência à insulina, tiróide, ansiedade, fertilidade", "notas": "Dividir em 2 tomas"}]}, {"cat": "Saúde Cardiovascular", "items": [{"nome": "Alho Envelhecido (Kyolic)", "dose": "600-1200", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Pressão arterial, colesterol, cardiovascular, imunidade", "notas": "Sem odor; preferir extracto envelhecido"}, {"nome": "Bergamota", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Colesterol, triglicéridos, glicémia, cardiovascular", "notas": "Extracto de casca de bergamota"}, {"nome": "Esteróis Vegetais", "dose": "1000-2000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Redução do colesterol LDL, cardiovascular", "notas": "Tomar às refeições"}, {"nome": "Canela (Extrato)", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Glicémia, resistência à insulina, colesterol", "notas": "Preferir Ceylon cinnamon (canela do Ceilão)"}]}, {"cat": "Suporte Hepático e Detox", "items": [{"nome": "Cardo-Mariano (Silimarina)", "dose": "300-600", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Hepatoprotector, cirrose, hepatite, detox hepático", "notas": ""}, {"nome": "Alcachofra (Extrato)", "dose": "300-500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Fígado, vesícula biliar, colesterol, digestão", "notas": ""}, {"nome": "Dente-de-Leão (Extrato)", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula/chá", "indicacoes": "Fígado, vesícula, diurético, digestão, detox", "notas": ""}]}, {"cat": "Saúde Óssea e Articulações", "items": [{"nome": "Colagénio Tipo I e III", "dose": "5000-10000", "unidade": "mg", "freq": "Diária", "forma": "Pó", "indicacoes": "Pele, tendões, ligamentos, ossos, cabelo, unhas", "notas": "Tomar com vitamina C para síntese"}, {"nome": "Colagénio Tipo II", "dose": "40-80", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Cartilagem articular, osteoartrite, articulações", "notas": "Dose muito inferior ao tipo I/III — não confundir"}, {"nome": "Glucosamina", "dose": "1000-1500", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Cartilagem, osteoartrite, articulações", "notas": ""}, {"nome": "Condroitina", "dose": "800-1200", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Cartilagem, retenção de água na matriz articular", "notas": "Frequentemente combinada com glucosamina"}, {"nome": "MSM (Metilsulfonilmetano)", "dose": "1000-3000", "unidade": "mg", "freq": "Diária", "forma": "Pó/cápsula", "indicacoes": "Articulações, tendões, inflamação, pele, cabelo", "notas": ""}]}, {"cat": "Cogumelos Medicinais", "items": [{"nome": "Reishi", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula/tintura", "indicacoes": "Imunidade, sono, adaptogénio, fígado, anti-inflamatório", "notas": "Tomar à noite para apoio ao sono"}, {"nome": "Shiitake", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Imunidade, colesterol, cardiovascular, antiviral", "notas": ""}, {"nome": "Maitake", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Imunidade, glicémia, colesterol, suporte oncológico", "notas": ""}, {"nome": "Cordyceps", "dose": "500-1000", "unidade": "mg", "freq": "Diária", "forma": "Cápsula", "indicacoes": "Energia, performance atlética, mitocôndrias, libido, imunidade", "notas": "Tomar de manhã"}]}];
 
 
 // ─── BIBLIOTECA SUPLEMENTOS ──────────────────────────────────────────────────
@@ -5165,6 +5290,97 @@ function apagarDoc(){
   fecharModal('modal-add-doc');
   renderDocumentos();
   showToast('Documento apagado.');
+}
+
+
+function exportarProtocoloSelecionado(){
+  if(!pacienteAtivo) return;
+  const todos = getSuplPac();
+  const histPac = (todos[pacienteAtivo.id]||[]);
+  if(!histPac.length){ showToast('Sem protocolos para exportar.'); return; }
+  // Find selected protocol (active one)
+  const selEl = document.querySelector('.supl-hist-item.selected');
+  const data = selEl ? selEl.querySelector('div').textContent.trim() : histPac[histPac.length-1].data;
+  const proto = histPac.find(p=>p.data===data) || histPac[histPac.length-1];
+  if(!proto){ showToast('Selecciona um protocolo primeiro.'); return; }
+  gerarPDFProtocolo(proto);
+}
+
+function gerarPDFProtocolo(proto){
+  if(!pacienteAtivo) return;
+  const pac = pacienteAtivo;
+  const hoje = new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
+  const dataProto = proto.data;
+  const lista = proto.lista || [];
+  const ativos = lista.filter(s=>s.estado==='ativo'||!s.estado);
+  const pausados = lista.filter(s=>s.estado==='pausado');
+  const desc = lista.filter(s=>s.estado==='descontinuado');
+
+  const secaoHTML = (titulo, items, corFundo, corTexto) => {
+    if(!items.length) return '';
+    return `
+      <div style="margin-bottom:20px">
+        <div style="background:${corFundo};color:${corTexto};padding:7px 14px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">${titulo} (${items.length})</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr style="background:#f5f5f5">
+              <th style="padding:6px 10px;text-align:left;color:#666;font-weight:600;font-size:10px;text-transform:uppercase">Suplemento</th>
+              <th style="padding:6px 10px;text-align:center;color:#666;font-weight:600;font-size:10px;text-transform:uppercase;width:100px">Dose</th>
+              <th style="padding:6px 10px;text-align:center;color:#666;font-weight:600;font-size:10px;text-transform:uppercase;width:100px">Frequência</th>
+              <th style="padding:6px 10px;text-align:left;color:#666;font-weight:600;font-size:10px;text-transform:uppercase">Notas</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map((s,i)=>`
+              <tr style="background:${i%2===0?'white':'#fafafa'}">
+                <td style="padding:8px 10px;font-weight:600;color:#1e2d3d;border-bottom:1px solid #f0f0f0">${s.nome}</td>
+                <td style="padding:8px 10px;text-align:center;color:#2E6DA4;font-weight:600;border-bottom:1px solid #f0f0f0">${s.dose||''}${s.unidade?' '+s.unidade:''}</td>
+                <td style="padding:8px 10px;text-align:center;color:#555;border-bottom:1px solid #f0f0f0">${s.freq||'Diária'}</td>
+                <td style="padding:8px 10px;color:#888;font-style:italic;border-bottom:1px solid #f0f0f0;font-size:11px">${s.notas||''}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  };
+
+  // Calc age
+  let idadeStr = '';
+  if(pac.nasc){
+    const nasc = new Date(pac.nasc+'T12:00:00');
+    const hoje2 = new Date();
+    let age = hoje2.getFullYear()-nasc.getFullYear();
+    if(hoje2 < new Date(hoje2.getFullYear()+'-'+pac.nasc.slice(5,10)+'T12:00:00')) age--;
+    idadeStr = ` &nbsp;|&nbsp; ${age} anos`;
+  }
+
+  const fullHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{font-family:Arial,sans-serif;padding:24px;color:#1e2d3d;font-size:12px}
+      @media print{body{padding:12px}}
+    </style>
+  </head><body>
+    <div style="background:#1A3A5C;color:white;padding:14px 18px;border-radius:8px;margin-bottom:18px">
+      <div style="font-size:17px;font-weight:700;margin-bottom:6px">PROTOCOLO DE SUPLEMENTAÇÃO</div>
+      <div style="font-size:11px;opacity:0.85">
+        Utente: <b>${pac.nome}</b>${pac.nif?' &nbsp;|&nbsp; NIF: '+pac.nif:''}${idadeStr} &nbsp;|&nbsp;
+        Sexo: ${(pac.sexo==='f'?'Feminino':'Masculino')} &nbsp;|&nbsp;
+        Protocolo de: <b>${dataProto}</b> &nbsp;|&nbsp; Emitido em: ${hoje}
+      </div>
+    </div>
+    ${secaoHTML('Suplementos Activos', ativos, '#E8F5EE', '#1E6B3A')}
+    ${pausados.length ? secaoHTML('Pausados', pausados, '#FFF3CD', '#856404') : ''}
+    ${desc.length ? secaoHTML('Descontinuados', desc, '#FDECEA', '#B02020') : ''}
+    <div style="margin-top:20px;padding-top:10px;border-top:1px solid #eee;font-size:10px;color:#aaa;text-align:center">
+      Relatório gerado pelo ClinicaScript &nbsp;·&nbsp; ${hoje}
+    </div>
+  </body></html>`;
+
+  const win = window.open('','_blank','width=900,height:700');
+  win.document.write(fullHTML);
+  win.document.close();
+  win.onload = ()=>{ setTimeout(()=>win.print(), 400); };
+  showToast('PDF pronto — usa "Guardar como PDF" no diálogo de impressão');
 }
 
 async function bootFromSupabase(){
