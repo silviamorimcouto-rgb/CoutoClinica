@@ -2366,7 +2366,7 @@ body{font-family:'DM Sans',sans-serif;background:#F0F4F8;color:var(--gray-800);m
 label{font-size:11px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.4px}
 input,select,textarea{font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;border-radius:7px;border:1px solid var(--gray-200);background:var(--gray-50);color:var(--gray-800);outline:none;transition:border 0.15s;width:100%}
 input:focus,select:focus,textarea:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px rgba(46,109,164,0.07)}
-textarea{resize:vertical;min-height:60px}
+textarea{resize:vertical;min-height:100px}
 
 /* ── PATIENT CARDS ────────────────────────────────────────────────────────── */
 .pac-search-bar{display:flex;gap:10px;margin-bottom:20px;align-items:center}
@@ -3170,7 +3170,7 @@ textarea{resize:vertical;min-height:60px}
       </div>
       <div class="form-group">
         <label>Notas (opcional)</label>
-        <textarea id="doc-notas" rows="2" placeholder="Ex: Questionário de sintomas preenchido em Janeiro..."></textarea>
+        <textarea id="doc-notas" rows="4" placeholder="Ex: Questionário de sintomas preenchido em Janeiro..."></textarea>
       </div>
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
         <button class="btn btn-danger" id="doc-apagar-btn" onclick="apagarDoc()" style="display:none;margin-right:auto">Apagar</button>
@@ -3208,7 +3208,7 @@ textarea{resize:vertical;min-height:60px}
           <textarea id="bsupl-indicacoes" rows="2" placeholder="Ex: Deficiência de vitamina D, suporte imune, saúde óssea..."></textarea>
         </div>
         <div class="form-group full"><label>Notas / Observações</label>
-          <textarea id="bsupl-notas" rows="2" placeholder="Ex: Tomar com refeição gordurosa, evitar em hipercalcemia..."></textarea>
+          <textarea id="bsupl-notas" rows="5" placeholder="Ex: Tomar com refeição gordurosa, evitar em hipercalcemia..."></textarea>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
@@ -3397,6 +3397,19 @@ function fmt2(v){const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?
 function parseFloatSafe(v){const n=parseFloat(v);return isNaN(n)?null:n}
 function showToast(msg,d=2600){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d)}
 function fecharModal(id){document.getElementById(id).classList.remove('open')}
+// Prevent accidental modal close — overlays don't close on outside click/drag
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.modal-overlay').forEach(ov=>{
+    ov.addEventListener('click', e=>{ e.stopPropagation(); });
+  });
+});
+// Prevent accidental modal close from outside clicks
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+    overlay.addEventListener('mousedown', e=>{ if(e.target===overlay) e.preventDefault(); });
+    overlay.addEventListener('touchstart', e=>{ if(e.target===overlay) e.stopPropagation(); }, {passive:false});
+  });
+});
 function avatarColor(nome){let h=0;for(let c of nome)h=(h<<5)-h+c.charCodeAt(0);return AVATAR_COLORS[Math.abs(h)%AVATAR_COLORS.length]}
 function initials(nome){return nome.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('')}
 
