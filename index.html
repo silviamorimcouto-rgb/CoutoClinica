@@ -2785,7 +2785,6 @@ textarea{resize:vertical;min-height:100px}
             <div class="profile-sub" id="profile-sub"></div>
           </div>
           <div style="margin-left:auto;display:flex;gap:6px">
-            <button class="btn btn-ghost" onclick="gerarRelatorioIA()" style="font-size:12px;padding:5px 12px;background:#F0F7FF;color:var(--navy);border-color:var(--blue-light)" title="Exportar relatório completo para IA">🤖 Relatório IA</button>
             <button class="btn btn-ghost" onclick="editarPacienteAtivo()" style="font-size:12px;padding:5px 12px">Editar</button>
             <button class="btn btn-danger" onclick="eliminarPacienteAtivo()" style="font-size:12px;padding:5px 10px">Apagar</button>
           </div>
@@ -2968,28 +2967,48 @@ textarea{resize:vertical;min-height:100px}
 
         <!-- TAB: SUPLEMENTAÇÃO -->
         <div class="tab-pane" id="pane-suplementos">
-          <div>
-            <!-- Toolbar -->
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-              <div>
-                <div style="font-size:14px;font-weight:600;color:var(--gray-800)">Suplementação</div>
-                <div id="supl-data-label" style="font-size:12px;color:var(--gray-400);margin-top:2px">Guardado automaticamente</div>
+          <div style="display:flex;gap:20px;align-items:flex-start">
+            <!-- Lista activa -->
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                <div>
+                  <div style="font-size:14px;font-weight:600;color:var(--gray-800)">Protocolo Activo</div>
+                  <div id="supl-data-label" style="font-size:12px;color:var(--gray-400);margin-top:2px"></div>
+                </div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-secondary" onclick="abrirHistoricoSupl()" style="font-size:12px;padding:6px 12px">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Histórico
+                  </button>
+                  <button class="btn btn-secondary" onclick="abrirPrescreverSupl()" style="font-size:12px;padding:6px 12px">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                    Da Biblioteca
+                  </button>
+                  <button class="btn btn-primary" onclick="abrirModalNovoSupl()" style="font-size:12px;padding:6px 12px">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg>
+                    Adicionar
+                  </button>
+                  <button class="btn btn-success" onclick="guardarProtocoloSupl()" style="font-size:12px;padding:6px 12px">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                    Guardar
+                  </button>
+                </div>
               </div>
-              <div style="display:flex;gap:8px">
-                <button class="btn btn-secondary" onclick="abrirPrescreverSupl()" style="font-size:12px;padding:6px 12px">
-                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
-                  Da Biblioteca
-                </button>
-                <button class="btn btn-primary" onclick="abrirModalNovoSupl()" style="font-size:12px;padding:6px 12px">
-                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg>
-                  Adicionar
-                </button>
-                <button class="btn btn-secondary" onclick="exportarSuplPDF()" style="font-size:12px;padding:6px 12px">
-                  ⬇ PDF
-                </button>
+              <div id="supl-lista"></div>
+            </div>
+            <!-- Histórico lateral -->
+            <div id="supl-hist-panel" style="display:none;width:260px;flex-shrink:0">
+              <div class="card" style="position:sticky;top:0">
+                <div class="card-header" style="background:var(--gray-50);padding:10px 14px">
+                  <h2 style="font-size:12px">Histórico de Protocolos</h2>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <button onclick="exportarProtocoloSelecionado()" title="Exportar protocolo seleccionado" style="background:none;border:1px solid var(--gray-200);border-radius:5px;cursor:pointer;padding:3px 7px;font-size:11px;color:var(--blue)">⬇ PDF</button>
+                    <button onclick="fecharHistoricoSupl()" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:16px">×</button>
+                  </div>
+                </div>
+                <div id="supl-hist-lista" style="max-height:500px;overflow-y:auto"></div>
               </div>
             </div>
-            <div id="supl-lista"></div>
           </div>
         </div>
 
@@ -3740,10 +3759,7 @@ function abrirModalNovoPaciente(id=null){
     document.getElementById('m-utente').value=p.utente||'';
     document.getElementById('m-seguro').value=p.seguro||'';document.getElementById('m-nasc').value=p.nasc||'';
     document.getElementById('m-sexo').value=p.sexo||'';document.getElementById('m-tel').value=p.tel||'';
-    // Don't show supl JSON in notas field
-    let notasVal = p.notas||'';
-    if(notasVal.startsWith('{')) try{ const pn=JSON.parse(notasVal); notasVal=pn.texto||''; }catch(e){ notasVal=''; }
-    document.getElementById('m-notas').value=notasVal;
+    document.getElementById('m-notas').value=p.notas||'';
   }else{
     ['m-nome','m-nif','m-utente','m-seguro','m-nasc','m-tel','m-notas'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('m-sexo').value='';
@@ -3756,12 +3772,10 @@ function editarPacienteAtivo(){if(pacienteAtivo)abrirModalNovoPaciente(pacienteA
 function guardarPaciente(){
   const nome=document.getElementById('m-nome').value.trim();
   if(!nome){showToast('Insira o nome.');return;}
-  const existingPac = editPacienteId ? pacientes.find(x=>x.id===editPacienteId) : null;
   const p={id:editPacienteId||Date.now().toString(),nome,
     nif:document.getElementById('m-nif').value.trim(),utente:document.getElementById('m-utente').value.trim(),seguro:document.getElementById('m-seguro').value.trim(),
     nasc:document.getElementById('m-nasc').value,sexo:document.getElementById('m-sexo').value,
-    tel:document.getElementById('m-tel').value.trim(),notas:document.getElementById('m-notas').value.trim(),
-    supl:existingPac?.supl||null,docs:existingPac?.docs||null};
+    tel:document.getElementById('m-tel').value.trim(),notas:document.getElementById('m-notas').value.trim()};
   if(editPacienteId){
     pacientes=pacientes.map(x=>x.id===editPacienteId?p:x);
     supa('PATCH','pacientes',{nome:p.nome,nif:p.nif,utente:p.utente,seguro:p.seguro,nasc:p.nasc,sexo:p.sexo,tel:p.tel,notas:p.notas},`?id=eq.${editPacienteId}`).catch(e=>console.error(e));
@@ -4714,49 +4728,35 @@ let suplAtivo = [];
 let suplEditIdx = null;
 
 function getSuplPac(){
-  // Returns single protocol object per patient (not array)
   return JSON.parse(localStorage.getItem('cs_supl')||'{}');
 }
 function saveSuplLocal(data){
   localStorage.setItem('cs_supl', JSON.stringify(data));
-}
-// Auto-save supl for active patient
-function autoSaveSupl(){
-  if(!pacienteAtivo) return;
-  const pacId = pacienteAtivo.id;
-  const todos = getSuplPac();
-  todos[pacId] = JSON.parse(JSON.stringify(suplAtivo));
-  saveSuplLocal(todos);
-  supa('PATCH','pacientes',{supl:JSON.stringify(suplAtivo)},`?id=eq.${pacId}`)
-    .catch(e=>console.error(e));
-  const p = pacientes.find(x=>x.id===pacId);
-  if(p) p.supl = JSON.stringify(suplAtivo);
-  const lbl = document.getElementById('supl-data-label');
-  if(lbl){ lbl.textContent='✓ Guardado às '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}); }
 }
 
 function renderSuplementosTab(){
   if(!pacienteAtivo) return;
   const pacId = pacienteAtivo.id;
   let todos = getSuplPac();
-  // Load from supl field or fallback from old format
-  if(!todos[pacId] && pacienteAtivo.supl){
-    try{ todos[pacId] = JSON.parse(pacienteAtivo.supl); saveSuplLocal(todos); }catch(e){}
+  // Fallback: read from pacienteAtivo.notas if not in localStorage
+  if(!todos[pacId] && pacienteAtivo.notas && pacienteAtivo.notas.startsWith('{')){
+    try{
+      const parsed = JSON.parse(pacienteAtivo.notas);
+      if(parsed.supl && parsed.supl.length){
+        todos[pacId] = parsed.supl;
+        saveSuplLocal(todos);
+      }
+    }catch(e){}
   }
-  // Old format fallback (array of protocols)
-  if(Array.isArray(todos[pacId])){
-    // Convert: take last protocol's lista
-    const arr = todos[pacId];
-    if(arr.length && arr[arr.length-1].lista){
-      todos[pacId] = arr[arr.length-1].lista;
-      saveSuplLocal(todos);
-    } else {
-      todos[pacId] = [];
-    }
+  const histPac = todos[pacId] || [];
+  if(histPac.length){
+    const last = histPac[histPac.length-1];
+    suplAtivo = JSON.parse(JSON.stringify(last.lista||[]));
+    document.getElementById('supl-data-label').textContent = 'Protocolo de ' + last.data;
+  } else {
+    suplAtivo = [];
+    document.getElementById('supl-data-label').textContent = 'Nenhum protocolo guardado ainda';
   }
-  suplAtivo = JSON.parse(JSON.stringify(todos[pacId] || []));
-  const lbl = document.getElementById('supl-data-label');
-  if(lbl) lbl.textContent = suplAtivo.length ? suplAtivo.length + ' suplementos' : 'Sem suplementos ainda';
   renderSuplLista();
 }
 
@@ -4833,7 +4833,6 @@ function guardarSuplemento(){
   else suplAtivo.push(s);
   fecharModal('modal-supl');
   renderSuplLista();
-  autoSaveSupl();
 }
 
 function apagarSuplemento(){
@@ -4842,12 +4841,27 @@ function apagarSuplemento(){
   suplAtivo.splice(suplEditIdx,1);
   fecharModal('modal-supl');
   renderSuplLista();
-  autoSaveSupl();
 }
 
 function guardarProtocoloSupl(){
-  autoSaveSupl();
-  showToast('Suplementação guardada! ✓');
+  if(!pacienteAtivo){showToast('Nenhum paciente activo.');return;}
+  if(!suplAtivo.length){showToast('Adiciona pelo menos um suplemento.');return;}
+  const pacId=pacienteAtivo.id;
+  const todos=getSuplPac();
+  if(!todos[pacId])todos[pacId]=[];
+  const data=new Date().toISOString().slice(0,10);
+  todos[pacId]=todos[pacId].filter(p=>p.data!==data);
+  todos[pacId].push({id:Date.now().toString(),data,lista:JSON.parse(JSON.stringify(suplAtivo))});
+  todos[pacId].sort((a,b)=>a.data.localeCompare(b.data));
+  saveSuplLocal(todos);
+  // Sync to Supabase
+  supa('PATCH','pacientes',{notas:JSON.stringify({supl:todos[pacId]})},`?id=eq.${pacId}`)
+    .catch(e=>console.error(e));
+  // Update local paciente object
+  const p=pacientes.find(x=>x.id===pacId);
+  if(p)p.notas=JSON.stringify({supl:todos[pacId]});
+  document.getElementById('supl-data-label').textContent='Protocolo de '+data;
+  showToast('Protocolo guardado! ✓');
 }
 
 function abrirHistoricoSupl(){
@@ -4858,40 +4872,14 @@ function abrirHistoricoSupl(){
   const lista=document.getElementById('supl-hist-lista');
   lista.innerHTML=histPac.map((p,i)=>`
     <div class="supl-hist-item ${i===0?'selected':''}" onclick="carregarProtocolo('${p.data}')">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:4px">
-        <div>
-          <div style="font-size:12px;font-weight:600">${p.data}</div>
-          <div style="font-size:11px;color:var(--gray-400)">${p.lista.length} suplementos · ${p.lista.filter(s=>s.estado==='ativo').length} ativos</div>
-        </div>
-        <button onclick="event.stopPropagation();apagarHistoricoSupl('${p.data}')" title="Apagar este protocolo"
-          style="background:none;border:1px solid #F5C6C3;border-radius:5px;cursor:pointer;padding:2px 6px;font-size:11px;color:#B02020;flex-shrink:0">×</button>
-      </div>
+      <div style="font-size:12px;font-weight:600">${p.data}</div>
+      <div style="font-size:11px;color:var(--gray-400)">${p.lista.length} suplementos · ${p.lista.filter(s=>s.estado==='ativo').length} ativos</div>
     </div>`).join('');
   document.getElementById('supl-hist-panel').style.display='';
 }
 
 function fecharHistoricoSupl(){
   document.getElementById('supl-hist-panel').style.display='none';
-}
-
-function apagarHistoricoSupl(data){
-  if(!pacienteAtivo) return;
-  if(!confirm(`Apagar o protocolo de ${data}? Esta acção não pode ser desfeita.`)) return;
-  const pacId = pacienteAtivo.id;
-  const todos = getSuplPac();
-  if(!todos[pacId]) return;
-  todos[pacId] = todos[pacId].filter(p=>p.data!==data);
-  saveSuplLocal(todos);
-  supa('PATCH','pacientes',{supl:JSON.stringify(todos[pacId])},`?id=eq.${pacId}`)
-    .catch(e=>console.error(e));
-  const p = pacientes.find(x=>x.id===pacId);
-  if(p) p.supl = JSON.stringify(todos[pacId]);
-  // If deleted the active protocol, reload
-  if(suplAtivo.length && document.getElementById('supl-data-label')?.textContent?.includes(data)){
-    renderSuplementosTab();
-  }
-  abrirHistoricoSupl();
-  showToast('Protocolo apagado.');
 }
 
 function carregarProtocolo(data){
@@ -5167,9 +5155,8 @@ function guardarSuplPaciente(){
     const existing = suplAtivo.findIndex(s=>s.nome===item.nome);
     if(existing>=0) suplAtivo[existing]=item; else suplAtivo.push(item);
   });
+  guardarProtocoloSupl();
   fecharModal('modal-prescrever-supl');
-  renderSuplLista();
-  autoSaveSupl();
   showToast(`${items.length} suplemento${items.length!==1?'s':''} adicionado${items.length!==1?'s':''} ao paciente! ✓`);
 }
 
@@ -5319,13 +5306,17 @@ function apagarDoc(){
 }
 
 
-function exportarSuplPDF(){
-  if(!pacienteAtivo || !suplAtivo.length){ showToast('Sem suplementos para exportar.'); return; }
-  gerarPDFProtocolo({data: new Date().toISOString().slice(0,10), lista: suplAtivo});
-}
-
 function exportarProtocoloSelecionado(){
-  exportarSuplPDF();
+  if(!pacienteAtivo) return;
+  const todos = getSuplPac();
+  const histPac = (todos[pacienteAtivo.id]||[]);
+  if(!histPac.length){ showToast('Sem protocolos para exportar.'); return; }
+  // Find selected protocol (active one)
+  const selEl = document.querySelector('.supl-hist-item.selected');
+  const data = selEl ? selEl.querySelector('div').textContent.trim() : histPac[histPac.length-1].data;
+  const proto = histPac.find(p=>p.data===data) || histPac[histPac.length-1];
+  if(!proto){ showToast('Selecciona um protocolo primeiro.'); return; }
+  gerarPDFProtocolo(proto);
 }
 
 function gerarPDFProtocolo(proto){
@@ -5405,171 +5396,6 @@ function gerarPDFProtocolo(proto){
   showToast('PDF pronto — usa "Guardar como PDF" no diálogo de impressão');
 }
 
-function gerarRelatorioIA(){
-  if(!pacienteAtivo){ showToast('Nenhum paciente activo.'); return; }
-  const pac = pacienteAtivo;
-  const hoje = new Date().toLocaleDateString('pt-PT');
-  const allRef = getRefFinal();
-  const hist = (resultados[pac.id] || []).slice().sort((a,b)=>a.data.localeCompare(b.data));
-  const supl = suplAtivo || [];
-
-  // Calc age
-  let idadeStr = 'N/D';
-  if(pac.nasc){
-    const nasc = new Date(pac.nasc+'T12:00:00');
-    const hoje2 = new Date();
-    let age = hoje2.getFullYear()-nasc.getFullYear();
-    if(hoje2 < new Date(hoje2.getFullYear()+'-'+pac.nasc.slice(5,10)+'T12:00:00')) age--;
-    idadeStr = age + ' anos';
-  }
-
-  let txt = '';
-  txt += '# RELATÓRIO CLÍNICO PARA ANÁLISE
-';
-  txt += `Data: ${hoje}
-
-`;
-
-  txt += '## DADOS DO PACIENTE
-';
-  txt += `Nome: ${pac.nome}
-`;
-  txt += `Sexo: ${pac.sexo==='f'?'Feminino':'Masculino'}
-`;
-  txt += `Idade: ${idadeStr}
-`;
-  if(pac.nasc) txt += `Data nascimento: ${new Date(pac.nasc+'T12:00:00').toLocaleDateString('pt-PT')}
-`;
-  if(pac.nif) txt += `NIF: ${pac.nif}
-`;
-  if(pac.utente) txt += `Nº Utente SNS: ${pac.utente}
-`;
-  if(pac.seguro) txt += `Seguro: ${pac.seguro}
-`;
-  txt += '
-';
-
-  // Notas clínicas
-  const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
-  const notasPac = todasNotas[pac.id] || [];
-  if(notasPac.length){
-    txt += '## NOTAS CLÍNICAS
-';
-    notasPac.slice(-3).forEach(n=>{
-      txt += `[${new Date(n.data).toLocaleDateString('pt-PT')}]
-${n.texto}
-
-`;
-    });
-  }
-
-  // Suplementação
-  if(supl.length){
-    const ativos = supl.filter(s=>s.estado==='ativo'||!s.estado);
-    const pausados = supl.filter(s=>s.estado==='pausado');
-    const desc = supl.filter(s=>s.estado==='descontinuado');
-    txt += '## SUPLEMENTAÇÃO ACTUAL
-';
-    if(ativos.length){
-      txt += '### Ativos
-';
-      ativos.forEach(s=>{ txt += `- ${s.nome}: ${s.dose||''} ${s.unidade||''} ${s.freq||''}${s.notas?' ('+s.notas+')':''}
-`; });
-    }
-    if(pausados.length){
-      txt += '### Pausados
-';
-      pausados.forEach(s=>{ txt += `- ${s.nome}: ${s.dose||''} ${s.unidade||''}
-`; });
-    }
-    if(desc.length){
-      txt += '### Descontinuados
-';
-      desc.forEach(s=>{ txt += `- ${s.nome}
-`; });
-    }
-    txt += '
-';
-  }
-
-  // Resultados de análises
-  if(hist.length){
-    txt += '## RESULTADOS DE ANÁLISES
-';
-    const sexo = pac.sexo || 'f';
-
-    // All markers that have data
-    const perfisVis = {};
-    allRef.forEach(a=>{
-      const temValor = hist.some(h=>h.valores?.[a.nome]!==undefined);
-      if(!temValor) return;
-      const p = a.perfil.split('(')[0].trim();
-      if(!perfisVis[p]) perfisVis[p] = [];
-      perfisVis[p].push(a);
-    });
-
-    // Show last result + trend
-    Object.entries(perfisVis).forEach(([perfil, lista])=>{
-      txt += `
-### ${perfil}
-`;
-      lista.forEach(a=>{
-        const minV = sexo==='f'?a.min_f:a.min_m;
-        const maxV = sexo==='f'?a.max_f:a.max_m;
-        const ref = sexo==='f'?(a.ref_f||''):(a.ref_m||'');
-        const unit = a.unidade||'';
-
-        // Get all values
-        const vals = hist.map(h=>{
-          const v = h.valores?.[a.nome];
-          if(!v||v.valor===''||v.valor===undefined) return null;
-          return {data:h.data, val:parseFloat(String(v.valor).replace(',','.'))};
-        }).filter(x=>x&&!isNaN(x.val));
-
-        if(!vals.length) return;
-
-        const last = vals[vals.length-1];
-        let status = '';
-        if(minV!==null&&minV!==undefined&&last.val<minV) status = ' ↓ BAIXO';
-        else if(maxV!==null&&maxV!==undefined&&last.val>maxV) status = ' ↑ ALTO';
-        else if(minV!==null||maxV!==null) status = ' ✓ IDEAL';
-
-        let trend = '';
-        if(vals.length>=2){
-          const prev = vals[vals.length-2].val;
-          const diff = last.val - prev;
-          const pct = Math.abs(diff/prev*100);
-          if(pct>5) trend = diff>0 ? ` (↑ vs ${vals[vals.length-2].data})` : ` (↓ vs ${vals[vals.length-2].data})`;
-        }
-
-        txt += `- **${a.nome}**: ${last.val} ${unit}${status}${trend}`;
-        if(ref) txt += ` [Ref: ${ref}]`;
-        if(vals.length>1){
-          txt += `
-  Histórico: ${vals.map(v=>v.data+': '+v.val).join(' | ')}`;
-        }
-        txt += '
-';
-      });
-    });
-  }
-
-  txt += '
----
-_Relatório gerado pelo ClinicaScript_
-';
-
-  // Copy to clipboard
-  navigator.clipboard.writeText(txt).then(()=>{
-    showToast('✓ Relatório copiado! Cola directamente no ChatGPT ou Claude.', 4000);
-  }).catch(()=>{
-    // Fallback: open in new window
-    const win = window.open('','_blank');
-    win.document.write('<pre style="font-family:monospace;padding:20px;white-space:pre-wrap">'+txt.replace(/</g,'&lt;')+'</pre>');
-    win.document.close();
-  });
-}
-
 async function bootFromSupabase(){
   // Always load fresh from Supabase — single source of truth
   // Clear stale local cache first
@@ -5585,18 +5411,14 @@ async function bootFromSupabase(){
     if(pacs && pacs.length){
       pacientes = pacs;
       localStorage.setItem('cs_pacientes', JSON.stringify(pacientes));
-      // Load supplementation from supl column
+      // Extract supplementation from notas field
       const suplMap={};
       pacs.forEach(p=>{
-        if(p.supl){
-          try{ suplMap[p.id]=JSON.parse(p.supl); }catch(e){}
-        } else if(p.notas&&p.notas.startsWith('{')){
-          // fallback from old notas field
-          try{
-            const parsed=JSON.parse(p.notas);
-            if(parsed.supl&&parsed.supl.length) suplMap[p.id]=parsed.supl;
-          }catch(e){}
-        }
+        if(!p.notas||!p.notas.startsWith('{'))return;
+        try{
+          const parsed=JSON.parse(p.notas);
+          if(parsed.supl&&parsed.supl.length) suplMap[p.id]=parsed.supl;
+        }catch(e){}
       });
       if(Object.keys(suplMap).length) localStorage.setItem('cs_supl',JSON.stringify(suplMap));
     }
