@@ -5866,16 +5866,22 @@ async function bootFromSupabase(){
     if(pacs && pacs.length){
       pacientes = pacs;
       localStorage.setItem('cs_pacientes', JSON.stringify(pacientes));
-      // Extract supplementation from notas field
+      // Load supplementation from supl column
       const suplMap={};
       pacs.forEach(p=>{
-        if(!p.notas||!p.notas.startsWith('{'))return;
-        try{
-          const parsed=JSON.parse(p.notas);
-          if(parsed.supl&&parsed.supl.length) suplMap[p.id]=parsed.supl;
-        }catch(e){}
+        if(p.supl){
+          try{
+            const lista = JSON.parse(p.supl);
+            // Handle old format {data,lista} array
+            if(Array.isArray(lista) && lista.length && lista[0] && lista[0].lista){
+              suplMap[p.id] = lista[lista.length-1].lista || [];
+            } else {
+              suplMap[p.id] = lista;
+            }
+          }catch(e){}
+        }
       });
-      if(Object.keys(suplMap).length) localStorage.setItem('cs_supl',JSON.stringify(suplMap));
+      localStorage.setItem('cs_supl', JSON.stringify(suplMap));
     }
 
     // 2. Histórico de prescrições
