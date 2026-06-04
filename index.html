@@ -2786,6 +2786,8 @@ textarea{resize:vertical;min-height:100px}
           </div>
           <div style="margin-left:auto;display:flex;gap:6px">
             <button class="btn btn-ghost" onclick="gerarRelatorioIA()" style="font-size:12px;padding:5px 12px;background:#F0F7FF;color:var(--navy);border-color:var(--blue-light)">🤖 IA</button>
+            <button class="btn btn-ghost" onclick="gerarRelatorioWord()" style="font-size:12px;padding:5px 12px;background:#E8F5EE;color:#1E6B3A;border-color:#A8D5B8">📄 Word</button>
+            <button class="btn btn-ghost" onclick="gerarRelatorioPDF()" style="font-size:12px;padding:5px 12px;background:#FDECEA;color:#B02020;border-color:#F5C6C3">📋 PDF</button>
             <button class="btn btn-ghost" onclick="editarPacienteAtivo()" style="font-size:12px;padding:5px 12px">Editar</button>
             <button class="btn btn-danger" onclick="eliminarPacienteAtivo()" style="font-size:12px;padding:5px 10px">Apagar</button>
           </div>
@@ -5505,6 +5507,296 @@ function gerarRelatorioIA(){
     win.document.write('<pre style="padding:20px;white-space:pre-wrap;font-size:13px">'+txt+'</pre>');
     win.document.close();
   }
+}
+
+
+function buildRelatorioData(){
+  if(!pacienteAtivo) return null;
+  const pac = pacienteAtivo;
+  const allRef = getRefFinal();
+  const hist = (resultados[pac.id] || []).slice().sort(function(a,b){return a.data.localeCompare(b.data);});
+  const supl = suplAtivo || [];
+  let idade = null;
+  if(pac.nasc){
+    const nasc = new Date(pac.nasc+'T12:00:00');
+    const h2 = new Date();
+    let age = h2.getFullYear()-nasc.getFullYear();
+    if(h2 < new Date(h2.getFullYear()+'-'+pac.nasc.slice(5,10)+'T12:00:00')) age--;
+    idade = age;
+  }
+  const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
+  const notasPac = (todasNotas[pac.id] || []).slice(-3);
+  // Build results grouped by profile
+  const sexo = pac.sexo || 'f';
+  const perfisVis = {};
+  allRef.forEach(function(a){
+    if(!hist.some(function(h){return h.valores&&h.valores[a.nome]!==undefined;})) return;
+    const perf = a.perfil.split('(')[0].trim();
+    if(!perfisVis[perf]) perfisVis[perf] = [];
+    perfisVis[perf].push(a);
+  });
+  const resultadosGrupos = [];
+  Object.entries(perfisVis).forEach(function(entry){
+    const perfil = entry[0]; const lista = entry[1];
+    const rows = [];
+    lista.forEach(function(a){
+      const minV = sexo==='f'?a.min_f:a.min_m;
+      const maxV = sexo==='f'?a.max_f:a.max_m;
+      const ref = sexo==='f'?(a.ref_f||''):(a.ref_m||'');
+      const unit = a.unidade||'';
+      const vals = hist.map(function(h){
+        const v = h.valores&&h.valores[a.nome];
+        if(!v||v.valor===''||v.valor===undefined) return null;
+        const n = parseFloat(String(v.valor).replace(',','.'));
+        return isNaN(n)?null:{data:h.data,val:n,unit:v.unidade||unit};
+      }).filter(Boolean);
+      if(!vals.length) return;
+      const last = vals[vals.length-1];
+      let status = 'normal';
+      if(minV!=null&&last.val<minV) status = 'baixo';
+      else if(maxV!=null&&last.val>maxV) status = 'alto';
+      rows.push({nome:a.nome,vals:vals,last:last,ref:ref,unit:unit,status:status,minV:minV,maxV:maxV});
+    });
+    if(rows.length) resultadosGrupos.push({perfil:perfil,rows:rows});
+  });
+  return {pac:pac,idade:idade,supl:supl,notasPac:notasPac,hist:hist,resultadosGrupos:resultadosGrupos,sexo:sexo};
+}
+
+async function gerarRelatorioWord(){
+  if(!pacienteAtivo){showToast('Nenhum paciente activo.');return;}
+  const d = buildRelatorioData();
+  if(!d){return;}
+  showToast('A gerar Word...', 5000);
+  const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,
+    AlignmentType,BorderStyle,WidthType,ShadingType,Header} = docx;
+  const AZ='1A3A5C', BL='2E6DA4', GR='1E6B3A', RD='B02020', AM='856404';
+  const WHITE='FFFFFF', LGRAY='F5F8FC', GRAY='666666';
+  const bN={top:{style:BorderStyle.NONE,size:0,color:WHITE},bottom:{style:BorderStyle.NONE,size:0,color:WHITE},left:{style:BorderStyle.NONE,size:0,color:WHITE},right:{style:BorderStyle.NONE,size:0,color:WHITE}};
+  const hoje = new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
+  const children = [];
+
+  function hdr(txt, color, size){
+    return new Paragraph({spacing:{before:200,after:80},children:[new TextRun({text:txt,font:'Arial',size:size||26,bold:true,color:color||AZ})]});
+  }
+  function linha(){
+    return new Paragraph({border:{bottom:{style:BorderStyle.SINGLE,size:6,color:'CCCCCC',space:1}},spacing:{before:0,after:120},children:[]});
+  }
+  function par(txt, opts){
+    opts = opts||{};
+    return new Paragraph({spacing:{before:opts.before||0,after:opts.after||40},children:[new TextRun({text:txt,font:'Arial',size:opts.size||22,color:opts.color||'333333',bold:opts.bold||false,italics:opts.italics||false})]});
+  }
+
+  // ── HEADER ──
+  children.push(
+    new Paragraph({shading:{fill:AZ,type:ShadingType.CLEAR},spacing:{before:0,after:0},children:[new TextRun({text:'  RELATÓRIO CLÍNICO',font:'Arial',size:32,bold:true,color:WHITE})]}),
+    new Paragraph({shading:{fill:AZ,type:ShadingType.CLEAR},spacing:{before:0,after:160},children:[new TextRun({text:'  Documento confidencial · '+hoje,font:'Arial',size:18,color:'AACCEE'})]}),
+  );
+
+  // ── DADOS DO PACIENTE ──
+  children.push(hdr('DADOS DO PACIENTE', AZ, 24), linha());
+  const dadosRows = [
+    ['Nome', d.pac.nome],
+    ['Sexo', d.pac.sexo==='f'?'Feminino':'Masculino'],
+    ['Idade', d.idade!=null ? d.idade+' anos' : 'N/D'],
+    ['Data de Nascimento', d.pac.nasc ? new Date(d.pac.nasc+'T12:00:00').toLocaleDateString('pt-PT') : '—'],
+  ];
+  if(d.pac.nif) dadosRows.push(['NIF', d.pac.nif]);
+  if(d.pac.utente) dadosRows.push(['Nº Utente SNS', d.pac.utente]);
+  if(d.pac.seguro) dadosRows.push(['Seguro de Saúde', d.pac.seguro]);
+  if(d.pac.tel) dadosRows.push(['Contacto', d.pac.tel]);
+
+  children.push(new Table({
+    width:{size:9200,type:WidthType.DXA},
+    columnWidths:[2800,6400],
+    borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
+    rows: dadosRows.map(function(r,i){
+      return new TableRow({children:[
+        new TableCell({borders:bN,shading:{fill:i%2?'F0F4F8':LGRAY,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:120,right:80},width:{size:2800,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:r[0],font:'Arial',size:20,bold:true,color:AZ})],spacing:{before:20,after:20}})]}),
+        new TableCell({borders:bN,shading:{fill:i%2?'F0F4F8':LGRAY,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},width:{size:6400,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:r[1],font:'Arial',size:20,color:'222222'})],spacing:{before:20,after:20}})]})
+      ]});
+    })
+  }));
+
+  // ── NOTAS ──
+  if(d.notasPac.length){
+    children.push(new Paragraph({spacing:{before:200,after:0},children:[]}));
+    children.push(hdr('NOTAS CLÍNICAS', AZ, 24), linha());
+    d.notasPac.forEach(function(n){
+      children.push(par('['+new Date(n.data).toLocaleDateString('pt-PT')+']',{bold:true,color:BL,size:20,before:80}));
+      children.push(par(n.texto,{size:20,color:'333333',after:80}));
+    });
+  }
+
+  // ── SUPLEMENTAÇÃO ──
+  if(d.supl.length){
+    children.push(new Paragraph({spacing:{before:200,after:0},children:[]}));
+    children.push(hdr('SUPLEMENTAÇÃO ACTUAL', AZ, 24), linha());
+    const ativos = d.supl.filter(function(s){return s.estado==='ativo'||!s.estado;});
+    const pausados = d.supl.filter(function(s){return s.estado==='pausado';});
+    const desc = d.supl.filter(function(s){return s.estado==='descontinuado';});
+
+    function suplTable(lista, bgColor){
+      if(!lista.length) return [];
+      return [new Table({
+        width:{size:9200,type:WidthType.DXA},
+        columnWidths:[3200,1600,1600,2800],
+        borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
+        rows:[
+          new TableRow({children:[
+            new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:120,right:80},width:{size:3200,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:'Suplemento',font:'Arial',size:18,bold:true,color:GRAY})],spacing:{before:10,after:10}})]}),
+            new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:80,right:80},width:{size:1600,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'Dose',font:'Arial',size:18,bold:true,color:GRAY})],spacing:{before:10,after:10}})]}),
+            new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:80,right:80},width:{size:1600,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'Frequência',font:'Arial',size:18,bold:true,color:GRAY})],spacing:{before:10,after:10}})]}),
+            new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:80,right:80},width:{size:2800,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:'Notas',font:'Arial',size:18,bold:true,color:GRAY})],spacing:{before:10,after:10}})]})
+          ]}),
+          ...lista.map(function(s,i){
+            return new TableRow({children:[
+              new TableCell({borders:bN,shading:{fill:i%2?WHITE:bgColor,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:120,right:80},width:{size:3200,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:s.nome,font:'Arial',size:20,bold:true,color:'222222'})],spacing:{before:20,after:20}})]}),
+              new TableCell({borders:bN,shading:{fill:i%2?WHITE:bgColor,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},width:{size:1600,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:(s.dose||'')+(s.unidade?' '+s.unidade:''),font:'Arial',size:20,bold:true,color:BL})],spacing:{before:20,after:20}})]}),
+              new TableCell({borders:bN,shading:{fill:i%2?WHITE:bgColor,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},width:{size:1600,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:s.freq||'',font:'Arial',size:18,color:'555555'})],spacing:{before:20,after:20}})]}),
+              new TableCell({borders:bN,shading:{fill:i%2?WHITE:bgColor,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},width:{size:2800,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:s.notas||'',font:'Arial',size:16,italics:true,color:'777777'})],spacing:{before:20,after:20}})]})
+            ]});
+          })
+        ]
+      }), new Paragraph({spacing:{before:60,after:0},children:[]})];
+    }
+
+    if(ativos.length){ children.push(par('Ativos ('+ativos.length+')',{bold:true,color:GR,size:20,before:80,after:40})); suplTable(ativos,'F0FAF4').forEach(function(r){children.push(r);}); }
+    if(pausados.length){ children.push(par('Pausados ('+pausados.length+')',{bold:true,color:AM,size:20,before:80,after:40})); suplTable(pausados,'FFFDF0').forEach(function(r){children.push(r);}); }
+    if(desc.length){ children.push(par('Descontinuados ('+desc.length+')',{bold:true,color:RD,size:20,before:80,after:40})); suplTable(desc,'FFF8F8').forEach(function(r){children.push(r);}); }
+  }
+
+  // ── RESULTADOS ──
+  if(d.resultadosGrupos.length){
+    children.push(new Paragraph({spacing:{before:200,after:0},children:[]}));
+    children.push(hdr('RESULTADOS DE ANÁLISES', AZ, 24), linha());
+    const datas = d.hist.map(function(h){return h.data;});
+
+    d.resultadosGrupos.forEach(function(grupo){
+      children.push(par(grupo.perfil,{bold:true,color:AZ,size:22,before:120,after:40}));
+      const colW = Math.max(1200, Math.floor(7200/(datas.length+2)));
+      const nomeW = 2800;
+      const refW = 1400;
+      const valW = Math.floor((9200-nomeW-refW)/Math.max(1,datas.length));
+      const allWidths = [nomeW, refW, ...datas.map(function(){return valW;})];
+
+      const rows = [
+        new TableRow({children:[
+          new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:120,right:60},width:{size:nomeW,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:'Análise',font:'Arial',size:17,bold:true,color:GRAY})],spacing:{before:10,after:10}})]}),
+          new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:60,right:60},width:{size:refW,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:'Ref.',font:'Arial',size:17,bold:true,color:GRAY})],spacing:{before:10,after:10}})]}),
+          ...datas.map(function(dt){
+            return new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:60,right:60},width:{size:valW,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:dt,font:'Arial',size:17,bold:true,color:GRAY})],spacing:{before:10,after:10}})]});
+          })
+        ]})
+      ];
+
+      grupo.rows.forEach(function(row,i){
+        const bg = i%2?WHITE:LGRAY;
+        const cells = [
+          new TableCell({borders:bN,shading:{fill:bg,type:ShadingType.CLEAR},margins:{top:50,bottom:50,left:120,right:60},width:{size:nomeW,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:row.nome,font:'Arial',size:18,bold:true,color:'222222'})],spacing:{before:15,after:15}})]}),
+          new TableCell({borders:bN,shading:{fill:bg,type:ShadingType.CLEAR},margins:{top:50,bottom:50,left:60,right:60},width:{size:refW,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:row.ref+(row.unit?' '+row.unit:''),font:'Arial',size:16,color:'888888'})],spacing:{before:15,after:15}})]})
+        ];
+        datas.forEach(function(dt){
+          const entry = row.vals.find(function(v){return v.data===dt;});
+          let cellTxt = '—'; let cellColor = '999999'; let cellBold = false; let cellBg = bg;
+          if(entry){
+            cellTxt = String(entry.val)+(entry.unit?' '+entry.unit:'');
+            if(row.status==='baixo'){cellColor=AM;cellBold=true;cellBg=i%2?'FFFEF5':'FFFDE8';}
+            else if(row.status==='alto'){cellColor=RD;cellBold=true;cellBg=i%2?'FFF8F8':'FFF0F0';}
+            else{cellColor=GR;cellBg=bg;}
+          }
+          cells.push(new TableCell({borders:bN,shading:{fill:cellBg,type:ShadingType.CLEAR},margins:{top:50,bottom:50,left:60,right:60},width:{size:valW,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:cellTxt,font:'Arial',size:19,bold:cellBold,color:cellColor})],spacing:{before:15,after:15}})]}));
+        });
+        rows.push(new TableRow({children:cells}));
+      });
+
+      children.push(new Table({width:{size:9200,type:WidthType.DXA},columnWidths:allWidths,
+        borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
+        rows:rows}));
+      children.push(new Paragraph({spacing:{before:80,after:0},children:[]}));
+    });
+  }
+
+  // ── FOOTER ──
+  children.push(new Paragraph({spacing:{before:200,after:0},border:{top:{style:BorderStyle.SINGLE,size:4,color:'CCCCCC',space:1}},children:[]}));
+  children.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:60,after:0},children:[new TextRun({text:'Documento gerado pelo ClinicaScript · '+hoje+' · Confidencial',font:'Arial',size:16,italics:true,color:'999999'})]}));
+
+  const docObj = new Document({sections:[{
+    properties:{page:{size:{width:11906,height:16838},margin:{top:900,right:800,bottom:1200,left:800}}},
+    children:children
+  }]});
+
+  try{
+    const buf = await Packer.toBuffer(docObj);
+    const blob = new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    saveAs(blob,'Relatorio_'+d.pac.nome.replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.docx');
+    showToast('Word gerado! ✓');
+  }catch(e){console.error(e);showToast('Erro ao gerar Word.');}
+}
+
+function gerarRelatorioPDF(){
+  if(!pacienteAtivo){showToast('Nenhum paciente activo.');return;}
+  const d = buildRelatorioData();
+  if(!d) return;
+  const hoje = new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
+
+  let suplHTML = '';
+  if(d.supl.length){
+    const ativos = d.supl.filter(function(s){return s.estado==='ativo'||!s.estado;});
+    const pausados = d.supl.filter(function(s){return s.estado==='pausado';});
+    const desc = d.supl.filter(function(s){return s.estado==='descontinuado';});
+    function suplSec(lista,label,bg,color){
+      if(!lista.length) return '';
+      return '<div style="margin-bottom:14px"><div style="background:'+bg+';color:'+color+';padding:5px 12px;border-radius:5px;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:6px">'+label+' ('+lista.length+')</div><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#f5f5f5"><th style="padding:5px 8px;text-align:left">Suplemento</th><th style="padding:5px 8px;text-align:center;width:90px">Dose</th><th style="padding:5px 8px;text-align:center;width:90px">Frequência</th><th style="padding:5px 8px;text-align:left">Notas</th></tr></thead><tbody>'+lista.map(function(s,i){return '<tr style="background:'+(i%2?'white':'#fafafa')+'"><td style="padding:6px 8px;font-weight:600">'+s.nome+'</td><td style="padding:6px 8px;text-align:center;color:#2E6DA4;font-weight:600">'+(s.dose||'')+' '+(s.unidade||'')+'</td><td style="padding:6px 8px;text-align:center;color:#555">'+(s.freq||'')+'</td><td style="padding:6px 8px;color:#888;font-style:italic">'+(s.notas||'')+'</td></tr>';}).join('')+'</tbody></table></div>';
+    }
+    suplHTML = suplSec(ativos,'Ativos','#E8F5EE','#1E6B3A')+suplSec(pausados,'Pausados','#FFF3CD','#856404')+suplSec(desc,'Descontinuados','#FDECEA','#B02020');
+  }
+
+  let resHTML = '';
+  if(d.resultadosGrupos.length){
+    const datas = d.hist.map(function(h){return h.data;});
+    resHTML = d.resultadosGrupos.map(function(grupo){
+      return '<div style="margin-bottom:16px"><div style="background:#2E6DA4;color:white;padding:5px 10px;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase">'+grupo.perfil+'</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr style="background:#f0f4f8"><th style="padding:5px 8px;text-align:left">Análise</th><th style="padding:5px 8px;text-align:left;color:#888">Referência</th>'+datas.map(function(dt){return '<th style="padding:5px 8px;text-align:center">'+dt+'</th>';}).join('')+'</tr></thead><tbody>'+grupo.rows.map(function(row,i){
+        const bg = i%2?'white':'#f9f9f9';
+        const cells = datas.map(function(dt){
+          const entry = row.vals.find(function(v){return v.data===dt;});
+          if(!entry) return '<td style="padding:5px 8px;text-align:center;color:#ccc">—</td>';
+          let color = '#1E6B3A'; let cellBg = '#E8F5EE';
+          if(row.status==='baixo'){color='#856404';cellBg='#FFF3CD';}
+          else if(row.status==='alto'){color='#B02020';cellBg='#FDECEA';}
+          return '<td style="padding:5px 8px;text-align:center;background:'+cellBg+';color:'+color+';font-weight:600">'+entry.val+' '+(entry.unit||row.unit||'')+'</td>';
+        }).join('');
+        return '<tr style="background:'+bg+'"><td style="padding:5px 8px;font-weight:600">'+row.nome+(row.unit?'<span style="font-size:9px;color:#888;margin-left:4px">'+row.unit+'</span>':'')+'</td><td style="padding:5px 8px;font-size:9px;color:#888">'+row.ref+'</td>'+cells+'</tr>';
+      }).join('')+'</tbody></table></div>';
+    }).join('');
+  }
+
+  let notasHTML = '';
+  if(d.notasPac.length){
+    notasHTML = '<section><h2>Notas Clínicas</h2>'+d.notasPac.map(function(n){return '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:#2E6DA4;margin-bottom:4px">['+new Date(n.data).toLocaleDateString('pt-PT')+']</div><div style="font-size:12px;line-height:1.6;white-space:pre-wrap">'+n.texto+'</div></div>';}).join('')+'</section>';
+  }
+
+  const fullHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:24px;color:#1e2d3d;font-size:12px}h2{font-size:14px;font-weight:700;color:#1A3A5C;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #2E6DA4}.header{background:#1A3A5C;color:white;padding:16px 20px;border-radius:8px;margin-bottom:20px}.header h1{font-size:20px;font-weight:700;margin-bottom:6px}.meta{font-size:11px;opacity:0.85}table{border-collapse:collapse}section{margin-bottom:20px}.dados-table{width:100%;margin-bottom:4px}.dados-table td{padding:6px 10px;font-size:12px;border-bottom:1px solid #eee}.dados-table td:first-child{font-weight:700;color:#1A3A5C;width:160px;background:#f5f8fc}.legenda{display:flex;gap:10px;margin:6px 0 14px;font-size:10px}.leg{padding:2px 8px;border-radius:10px;font-weight:600}@media print{body{padding:12px}}</style></head><body>'
+    +'<div class="header"><h1>RELATÓRIO CLÍNICO</h1><div class="meta">'+d.pac.nome+' · '+(d.pac.sexo==='f'?'Feminino':'Masculino')+(d.idade!=null?' · '+d.idade+' anos':'')+(d.pac.nasc?' · '+new Date(d.pac.nasc+'T12:00:00').toLocaleDateString('pt-PT'):'')+'<br>Emitido em: '+hoje+'</div></div>'
+    +'<section><h2>Dados do Paciente</h2><table class="dados-table"><tbody>'
+    +'<tr><td>Nome</td><td>'+d.pac.nome+'</td></tr>'
+    +'<tr><td>Sexo</td><td>'+(d.pac.sexo==='f'?'Feminino':'Masculino')+'</td></tr>'
+    +'<tr><td>Idade</td><td>'+(d.idade!=null?d.idade+' anos':'N/D')+'</td></tr>'
+    +(d.pac.nasc?'<tr><td>Nascimento</td><td>'+new Date(d.pac.nasc+'T12:00:00').toLocaleDateString('pt-PT')+'</td></tr>':'')
+    +(d.pac.nif?'<tr><td>NIF</td><td>'+d.pac.nif+'</td></tr>':'')
+    +(d.pac.utente?'<tr><td>Nº Utente SNS</td><td>'+d.pac.utente+'</td></tr>':'')
+    +(d.pac.seguro?'<tr><td>Seguro de Saúde</td><td>'+d.pac.seguro+'</td></tr>':'')
+    +'</tbody></table></section>'
+    +notasHTML
+    +(d.supl.length?'<section><h2>Suplementação Actual</h2>'+suplHTML+'</section>':'')
+    +(d.resultadosGrupos.length?'<section><h2>Resultados de Análises</h2><div class="legenda"><span class="leg" style="background:#E8F5EE;color:#1E6B3A">✓ Ideal</span><span class="leg" style="background:#FDECEA;color:#B02020">↑ Alto</span><span class="leg" style="background:#FFF3CD;color:#856404">↓ Baixo</span></div>'+resHTML+'</section>':'')
+    +'<div style="margin-top:20px;padding-top:10px;border-top:1px solid #eee;font-size:10px;color:#aaa;text-align:center">Relatório gerado pelo ClinicaScript · '+hoje+' · Documento Confidencial</div>'
+    +'</body></html>';
+
+  const win = window.open('','_blank','width=1000,height=750');
+  win.document.write(fullHTML);
+  win.document.close();
+  win.onload = function(){ setTimeout(function(){ win.print(); }, 400); };
+  showToast('PDF pronto — usa "Guardar como PDF" no diálogo de impressão');
 }
 
 async function bootFromSupabase(){
