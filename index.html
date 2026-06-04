@@ -2709,12 +2709,84 @@ textarea{resize:vertical;min-height:100px}
 
   /* Hide less important cols on mobile */
   .res-cell-ref { display: none !important; }
+
+  /* Profile header — stack buttons on mobile */
+  #view-perfil .profile-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  #view-perfil .profile-header > div:last-child {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  #view-perfil .profile-header > div:last-child .btn {
+    flex: 1 !important;
+    min-width: 70px !important;
+    text-align: center !important;
+    justify-content: center !important;
+    font-size: 11px !important;
+    padding: 7px 8px !important;
+  }
+
+  /* Modal bottom sheet — make inputs bigger and button always visible */
+  .modal-body { padding: 16px !important; }
+  .modal-body input, .modal-body select, .modal-body textarea {
+    font-size: 16px !important;
+    padding: 12px !important;
+    min-height: 48px !important;
+  }
+  .modal-footer {
+    padding: 12px 16px !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    background: white !important;
+    border-top: 1px solid var(--gray-200) !important;
+    z-index: 10 !important;
+  }
+  .modal-footer .btn {
+    min-height: 48px !important;
+    font-size: 15px !important;
+    flex: 1 !important;
+  }
+
+  /* Resultados date items — bigger tap targets */
+  .res-data-item {
+    padding: 10px 12px !important;
+    min-width: 110px !important;
+  }
+  .res-data-item div:first-child { font-size: 13px !important; }
+
+  /* Form groups */
+  .form-group label { font-size: 12px !important; margin-bottom: 4px !important; }
+  .form-row { flex-direction: column !important; gap: 10px !important; }
+
+  /* Supl list items — bigger tap targets */
+  .supl-item { padding: 12px !important; }
+  .supl-item .btn { min-height: 36px !important; min-width: 36px !important; }
+
+  /* Prescrição toolbar wrap */
+  #pane-prescricao > div:first-child {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  #pane-prescricao > div:first-child .btn { flex: 1 !important; min-width: 80px !important; }
 }
 
 @media (max-width: 480px) {
   .topbar-title { font-size: 14px !important; }
   .btn { font-size: 12px !important; padding: 7px 10px !important; }
   .profile-tab { font-size: 11px !important; padding: 8px 10px !important; }
+
+  /* Even bigger inputs on small phones */
+  .modal-body input, .modal-body select, .modal-body textarea {
+    font-size: 16px !important;
+    padding: 14px 12px !important;
+  }
+  /* Modal full screen on small phones */
+  .modal { max-height: 96vh !important; }
 }
 </style>
 </head>
