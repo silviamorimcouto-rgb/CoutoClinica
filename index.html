@@ -5866,20 +5866,36 @@ async function bootFromSupabase(){
     if(pacs && pacs.length){
       pacientes = pacs;
       localStorage.setItem('cs_pacientes', JSON.stringify(pacientes));
-      // Load supplementation from supl column
+      // Load supplementation — try supl column first, fallback to notas (legacy)
       const suplMap={};
       pacs.forEach(p=>{
+        let lista = null;
+        // 1. New format: supl column (flat array)
         if(p.supl){
           try{
-            const lista = JSON.parse(p.supl);
-            // Handle old format {data,lista} array
-            if(Array.isArray(lista) && lista.length && lista[0] && lista[0].lista){
-              suplMap[p.id] = lista[lista.length-1].lista || [];
-            } else {
-              suplMap[p.id] = lista;
+            const parsed = JSON.parse(p.supl);
+            if(Array.isArray(parsed) && parsed.length && parsed[0] && parsed[0].lista){
+              lista = parsed[parsed.length-1].lista || [];
+            } else if(Array.isArray(parsed)){
+              lista = parsed;
             }
           }catch(e){}
         }
+        // 2. Legacy format: notas column (JSON with supl key)
+        if(!lista && p.notas && p.notas.trim().startsWith('{')){
+          try{
+            const parsed = JSON.parse(p.notas);
+            if(parsed.supl && Array.isArray(parsed.supl)){
+              const raw = parsed.supl;
+              if(raw.length && raw[0].lista){
+                lista = raw[raw.length-1].lista || [];
+              } else {
+                lista = raw;
+              }
+            }
+          }catch(e){}
+        }
+        if(lista && lista.length) suplMap[p.id] = lista;
       });
       localStorage.setItem('cs_supl', JSON.stringify(suplMap));
     }
