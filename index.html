@@ -2785,6 +2785,7 @@ textarea{resize:vertical;min-height:100px}
             <div class="profile-sub" id="profile-sub"></div>
           </div>
           <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn btn-ghost" onclick="gerarRelatorioIA()" style="font-size:12px;padding:5px 12px;background:#F0F7FF;color:var(--navy);border-color:var(--blue-light)">🤖 IA</button>
             <button class="btn btn-ghost" onclick="editarPacienteAtivo()" style="font-size:12px;padding:5px 12px">Editar</button>
             <button class="btn btn-danger" onclick="eliminarPacienteAtivo()" style="font-size:12px;padding:5px 10px">Apagar</button>
           </div>
@@ -2976,10 +2977,7 @@ textarea{resize:vertical;min-height:100px}
                   <div id="supl-data-label" style="font-size:12px;color:var(--gray-400);margin-top:2px"></div>
                 </div>
                 <div style="display:flex;gap:8px">
-                  <button class="btn btn-secondary" onclick="abrirHistoricoSupl()" style="font-size:12px;padding:6px 12px">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    Histórico
-                  </button>
+
                   <button class="btn btn-secondary" onclick="abrirPrescreverSupl()" style="font-size:12px;padding:6px 12px">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                     Da Biblioteca
@@ -2988,10 +2986,7 @@ textarea{resize:vertical;min-height:100px}
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg>
                     Adicionar
                   </button>
-                  <button class="btn btn-success" onclick="guardarProtocoloSupl()" style="font-size:12px;padding:6px 12px">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-                    Guardar
-                  </button>
+                  <button class="btn btn-secondary" onclick="gerarPDFProtocolo({data:new Date().toISOString().slice(0,10),lista:suplAtivo})" style="font-size:12px;padding:6px 12px">⬇ PDF</button>
                 </div>
               </div>
               <div id="supl-lista"></div>
@@ -4733,6 +4728,18 @@ function getSuplPac(){
 function saveSuplLocal(data){
   localStorage.setItem('cs_supl', JSON.stringify(data));
 }
+function autoSaveSupl(){
+  if(!pacienteAtivo) return;
+  const pacId = pacienteAtivo.id;
+  const todos = getSuplPac();
+  todos[pacId] = JSON.parse(JSON.stringify(suplAtivo));
+  saveSuplLocal(todos);
+  supa('PATCH','pacientes',{supl:JSON.stringify(suplAtivo)},`?id=eq.${pacId}`).catch(e=>console.error(e));
+  const p = pacientes.find(x=>x.id===pacId);
+  if(p) p.supl = JSON.stringify(suplAtivo);
+  const lbl = document.getElementById('supl-data-label');
+  if(lbl) lbl.textContent = suplAtivo.length + ' suplementos';
+}
 
 function renderSuplementosTab(){
   if(!pacienteAtivo) return;
@@ -4833,6 +4840,7 @@ function guardarSuplemento(){
   else suplAtivo.push(s);
   fecharModal('modal-supl');
   renderSuplLista();
+  autoSaveSupl();
 }
 
 function apagarSuplemento(){
@@ -4841,6 +4849,7 @@ function apagarSuplemento(){
   suplAtivo.splice(suplEditIdx,1);
   fecharModal('modal-supl');
   renderSuplLista();
+  autoSaveSupl();
 }
 
 function guardarProtocoloSupl(){
@@ -5394,6 +5403,108 @@ function gerarPDFProtocolo(proto){
   win.document.close();
   win.onload = ()=>{ setTimeout(()=>win.print(), 400); };
   showToast('PDF pronto — usa "Guardar como PDF" no diálogo de impressão');
+}
+
+
+function gerarRelatorioIA(){
+  if(!pacienteAtivo){ showToast('Nenhum paciente activo.'); return; }
+  const pac = pacienteAtivo;
+  const hoje = new Date().toLocaleDateString('pt-PT');
+  const allRef = getRefFinal();
+  const hist = (resultados[pac.id] || []).slice().sort(function(a,b){return a.data.localeCompare(b.data);});
+  const supl = suplAtivo || [];
+  let idadeStr = 'N/D';
+  if(pac.nasc){
+    const nasc = new Date(pac.nasc+'T12:00:00');
+    const h2 = new Date();
+    let age = h2.getFullYear()-nasc.getFullYear();
+    if(h2 < new Date(h2.getFullYear()+'-'+pac.nasc.slice(5,10)+'T12:00:00')) age--;
+    idadeStr = age + ' anos';
+  }
+  let txt = '# RELATORIO CLINICO\n';
+  txt += 'Data: ' + hoje + '\n\n';
+  txt += '## DADOS DO PACIENTE\n';
+  txt += 'Nome: ' + pac.nome + '\n';
+  txt += 'Sexo: ' + (pac.sexo==='f'?'Feminino':'Masculino') + '\n';
+  txt += 'Idade: ' + idadeStr + '\n';
+  if(pac.nasc) txt += 'Nascimento: ' + new Date(pac.nasc+'T12:00:00').toLocaleDateString('pt-PT') + '\n';
+  if(pac.nif) txt += 'NIF: ' + pac.nif + '\n';
+  if(pac.utente) txt += 'N Utente SNS: ' + pac.utente + '\n';
+  if(pac.seguro) txt += 'Seguro: ' + pac.seguro + '\n';
+  txt += '\n';
+  const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
+  const notasPac = todasNotas[pac.id] || [];
+  if(notasPac.length){
+    txt += '## NOTAS CLINICAS\n';
+    notasPac.slice(-3).forEach(function(n){ txt += '[' + new Date(n.data).toLocaleDateString('pt-PT') + ']\n' + n.texto + '\n\n'; });
+  }
+  if(supl.length){
+    txt += '## SUPLEMENTACAO\n';
+    const ativos = supl.filter(function(s){return s.estado==='ativo'||!s.estado;});
+    const pausados = supl.filter(function(s){return s.estado==='pausado';});
+    const desc = supl.filter(function(s){return s.estado==='descontinuado';});
+    if(ativos.length){ txt += 'Ativos:\n'; ativos.forEach(function(s){ txt += '- ' + s.nome + ': ' + (s.dose||'') + ' ' + (s.unidade||'') + ' ' + (s.freq||'') + (s.notas?' ('+s.notas+')':'') + '\n'; }); }
+    if(pausados.length){ txt += 'Pausados:\n'; pausados.forEach(function(s){ txt += '- ' + s.nome + '\n'; }); }
+    if(desc.length){ txt += 'Descontinuados:\n'; desc.forEach(function(s){ txt += '- ' + s.nome + '\n'; }); }
+    txt += '\n';
+  }
+  if(hist.length){
+    txt += '## RESULTADOS\n';
+    const sexo = pac.sexo || 'f';
+    const perfisVis = {};
+    allRef.forEach(function(a){
+      if(!hist.some(function(h){return h.valores&&h.valores[a.nome]!==undefined;})) return;
+      const perf = a.perfil.split('(')[0].trim();
+      if(!perfisVis[perf]) perfisVis[perf] = [];
+      perfisVis[perf].push(a);
+    });
+    Object.entries(perfisVis).forEach(function(entry){
+      const perfil = entry[0]; const lista = entry[1];
+      txt += '\n### ' + perfil + '\n';
+      lista.forEach(function(a){
+        const minV = sexo==='f'?a.min_f:a.min_m;
+        const maxV = sexo==='f'?a.max_f:a.max_m;
+        const ref = sexo==='f'?(a.ref_f||''):(a.ref_m||'');
+        const unit = a.unidade||'';
+        const vals = hist.map(function(h){
+          const v = h.valores&&h.valores[a.nome];
+          if(!v||v.valor===''||v.valor===undefined) return null;
+          const n = parseFloat(String(v.valor).replace(',','.'));
+          return isNaN(n)?null:{data:h.data,val:n};
+        }).filter(Boolean);
+        if(!vals.length) return;
+        const last = vals[vals.length-1];
+        let status = '';
+        if(minV!=null&&last.val<minV) status = ' BAIXO';
+        else if(maxV!=null&&last.val>maxV) status = ' ALTO';
+        else if(minV!=null||maxV!=null) status = ' IDEAL';
+        let trend = '';
+        if(vals.length>=2){
+          const prev = vals[vals.length-2].val||1;
+          const diff = last.val - prev;
+          if(Math.abs(diff/prev)>0.05) trend = (diff>0?' (a subir)':' (a descer)');
+        }
+        txt += '- ' + a.nome + ': ' + last.val + ' ' + unit + status + trend;
+        if(ref) txt += ' [Ref: ' + ref + ']';
+        if(vals.length>1) txt += '\n  Historico: ' + vals.map(function(v){return v.data+': '+v.val;}).join(' | ');
+        txt += '\n';
+      });
+    });
+  }
+  txt += '\n---\nRelatorio gerado pelo ClinicaScript\n';
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(function(){
+      showToast('Relatorio copiado! Cola no ChatGPT ou Claude.', 4000);
+    }).catch(function(){
+      const win = window.open('','_blank','width=800,height=600');
+      win.document.write('<pre style="padding:20px;white-space:pre-wrap;font-size:13px">'+txt+'</pre>');
+      win.document.close();
+    });
+  } else {
+    const win = window.open('','_blank','width=800,height=600');
+    win.document.write('<pre style="padding:20px;white-space:pre-wrap;font-size:13px">'+txt+'</pre>');
+    win.document.close();
+  }
 }
 
 async function bootFromSupabase(){
