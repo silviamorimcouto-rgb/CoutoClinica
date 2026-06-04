@@ -3759,7 +3759,10 @@ function abrirModalNovoPaciente(id=null){
     document.getElementById('m-utente').value=p.utente||'';
     document.getElementById('m-seguro').value=p.seguro||'';document.getElementById('m-nasc').value=p.nasc||'';
     document.getElementById('m-sexo').value=p.sexo||'';document.getElementById('m-tel').value=p.tel||'';
-    document.getElementById('m-notas').value=p.notas||'';
+    // Don't show supl JSON in notas field
+    let notasVal = p.notas||'';
+    if(notasVal.startsWith('{')) try{ const pn=JSON.parse(notasVal); notasVal=pn.texto||''; }catch(e){ notasVal=''; }
+    document.getElementById('m-notas').value=notasVal;
   }else{
     ['m-nome','m-nif','m-utente','m-seguro','m-nasc','m-tel','m-notas'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('m-sexo').value='';
@@ -3772,10 +3775,12 @@ function editarPacienteAtivo(){if(pacienteAtivo)abrirModalNovoPaciente(pacienteA
 function guardarPaciente(){
   const nome=document.getElementById('m-nome').value.trim();
   if(!nome){showToast('Insira o nome.');return;}
+  const existingPac = editPacienteId ? pacientes.find(x=>x.id===editPacienteId) : null;
   const p={id:editPacienteId||Date.now().toString(),nome,
     nif:document.getElementById('m-nif').value.trim(),utente:document.getElementById('m-utente').value.trim(),seguro:document.getElementById('m-seguro').value.trim(),
     nasc:document.getElementById('m-nasc').value,sexo:document.getElementById('m-sexo').value,
-    tel:document.getElementById('m-tel').value.trim(),notas:document.getElementById('m-notas').value.trim()};
+    tel:document.getElementById('m-tel').value.trim(),notas:document.getElementById('m-notas').value.trim(),
+    supl:existingPac?.supl||null,docs:existingPac?.docs||null};
   if(editPacienteId){
     pacientes=pacientes.map(x=>x.id===editPacienteId?p:x);
     supa('PATCH','pacientes',{nome:p.nome,nif:p.nif,utente:p.utente,seguro:p.seguro,nasc:p.nasc,sexo:p.sexo,tel:p.tel,notas:p.notas},`?id=eq.${editPacienteId}`).catch(e=>console.error(e));
@@ -4855,11 +4860,12 @@ function guardarProtocoloSupl(){
   todos[pacId].sort((a,b)=>a.data.localeCompare(b.data));
   saveSuplLocal(todos);
   // Sync to Supabase
-  supa('PATCH','pacientes',{notas:JSON.stringify({supl:todos[pacId]})},`?id=eq.${pacId}`)
+  // Save supl in dedicated localStorage key, sync to Supabase supl column
+  supa('PATCH','pacientes',{supl:JSON.stringify(todos[pacId])},`?id=eq.${pacId}`)
     .catch(e=>console.error(e));
   // Update local paciente object
   const p=pacientes.find(x=>x.id===pacId);
-  if(p)p.notas=JSON.stringify({supl:todos[pacId]});
+  if(p)p.supl=JSON.stringify(todos[pacId]);
   document.getElementById('supl-data-label').textContent='Protocolo de '+data;
   showToast('Protocolo guardado! ✓');
 }
@@ -4872,14 +4878,40 @@ function abrirHistoricoSupl(){
   const lista=document.getElementById('supl-hist-lista');
   lista.innerHTML=histPac.map((p,i)=>`
     <div class="supl-hist-item ${i===0?'selected':''}" onclick="carregarProtocolo('${p.data}')">
-      <div style="font-size:12px;font-weight:600">${p.data}</div>
-      <div style="font-size:11px;color:var(--gray-400)">${p.lista.length} suplementos · ${p.lista.filter(s=>s.estado==='ativo').length} ativos</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:4px">
+        <div>
+          <div style="font-size:12px;font-weight:600">${p.data}</div>
+          <div style="font-size:11px;color:var(--gray-400)">${p.lista.length} suplementos · ${p.lista.filter(s=>s.estado==='ativo').length} ativos</div>
+        </div>
+        <button onclick="event.stopPropagation();apagarHistoricoSupl('${p.data}')" title="Apagar este protocolo"
+          style="background:none;border:1px solid #F5C6C3;border-radius:5px;cursor:pointer;padding:2px 6px;font-size:11px;color:#B02020;flex-shrink:0">×</button>
+      </div>
     </div>`).join('');
   document.getElementById('supl-hist-panel').style.display='';
 }
 
 function fecharHistoricoSupl(){
   document.getElementById('supl-hist-panel').style.display='none';
+}
+
+function apagarHistoricoSupl(data){
+  if(!pacienteAtivo) return;
+  if(!confirm(`Apagar o protocolo de ${data}? Esta acção não pode ser desfeita.`)) return;
+  const pacId = pacienteAtivo.id;
+  const todos = getSuplPac();
+  if(!todos[pacId]) return;
+  todos[pacId] = todos[pacId].filter(p=>p.data!==data);
+  saveSuplLocal(todos);
+  supa('PATCH','pacientes',{supl:JSON.stringify(todos[pacId])},`?id=eq.${pacId}`)
+    .catch(e=>console.error(e));
+  const p = pacientes.find(x=>x.id===pacId);
+  if(p) p.supl = JSON.stringify(todos[pacId]);
+  // If deleted the active protocol, reload
+  if(suplAtivo.length && document.getElementById('supl-data-label')?.textContent?.includes(data)){
+    renderSuplementosTab();
+  }
+  abrirHistoricoSupl();
+  showToast('Protocolo apagado.');
 }
 
 function carregarProtocolo(data){
@@ -5157,6 +5189,7 @@ function guardarSuplPaciente(){
   });
   guardarProtocoloSupl();
   fecharModal('modal-prescrever-supl');
+  renderSuplLista();
   showToast(`${items.length} suplemento${items.length!==1?'s':''} adicionado${items.length!==1?'s':''} ao paciente! ✓`);
 }
 
@@ -5411,14 +5444,18 @@ async function bootFromSupabase(){
     if(pacs && pacs.length){
       pacientes = pacs;
       localStorage.setItem('cs_pacientes', JSON.stringify(pacientes));
-      // Extract supplementation from notas field
+      // Load supplementation from supl column
       const suplMap={};
       pacs.forEach(p=>{
-        if(!p.notas||!p.notas.startsWith('{'))return;
-        try{
-          const parsed=JSON.parse(p.notas);
-          if(parsed.supl&&parsed.supl.length) suplMap[p.id]=parsed.supl;
-        }catch(e){}
+        if(p.supl){
+          try{ suplMap[p.id]=JSON.parse(p.supl); }catch(e){}
+        } else if(p.notas&&p.notas.startsWith('{')){
+          // fallback from old notas field
+          try{
+            const parsed=JSON.parse(p.notas);
+            if(parsed.supl&&parsed.supl.length) suplMap[p.id]=parsed.supl;
+          }catch(e){}
+        }
       });
       if(Object.keys(suplMap).length) localStorage.setItem('cs_supl',JSON.stringify(suplMap));
     }
