@@ -2755,9 +2755,10 @@ textarea{resize:vertical;min-height:100px}
   /* Resultados date items — bigger tap targets */
   .res-data-item {
     padding: 10px 12px !important;
-    min-width: 110px !important;
+    min-width: 120px !important;
+    white-space: nowrap !important;
   }
-  .res-data-item div:first-child { font-size: 13px !important; }
+  .res-data-item div:first-child { font-size: 13px !important; white-space: nowrap !important; }
 
   /* Form groups */
   .form-group label { font-size: 12px !important; margin-bottom: 4px !important; }
@@ -3150,13 +3151,13 @@ textarea{resize:vertical;min-height:100px}
     <div class="modal-body">
       <div class="form-group">
         <label>Data das análises</label>
-        <input type="date" id="nova-data-input" style="width:100%;font-size:15px;padding:10px">
+        <input type="date" id="nova-data-input" style="width:100%;font-size:16px;padding:14px;border:2px solid var(--gray-200);border-radius:8px;min-height:52px">
       </div>
-      <p style="font-size:12px;color:var(--gray-400);margin-top:8px">Depois de confirmar, aparece a tabela completa para preencheres os valores.</p>
-      <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
-        <button class="btn btn-secondary" onclick="fecharModal('modal-nova-data')">Cancelar</button>
-        <button class="btn btn-primary" onclick="confirmarNovaData()">Abrir tabela →</button>
-      </div>
+      <p style="font-size:12px;color:var(--blue);margin-top:8px">Depois de confirmar, aparece a tabela completa para preencheres os valores.</p>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:8px;padding:16px;border-top:1px solid var(--gray-100);position:sticky;bottom:0;background:white">
+      <button class="btn btn-secondary" onclick="fecharModal('modal-nova-data')" style="flex:1;min-height:48px">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarNovaData()" style="flex:2;min-height:48px;font-size:15px">✓ Abrir tabela</button>
     </div>
   </div>
 </div>
