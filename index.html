@@ -2874,14 +2874,13 @@ textarea{resize:vertical;min-height:100px}
               </div>
             </div>
           </div>
-        </div>
+          <!-- HISTORICO dentro da Prescrição -->
+          <div id="prescricao-historico-section" style="display:none;margin-top:24px">
+            <div style="font-size:13px;font-weight:600;color:var(--gray-800);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--gray-200)">Histórico de Prescrições</div>
+            <div id="historico-pac-list"></div>
+          </div>
 
-        <!-- HISTORICO dentro da Prescrição -->
-        <div id="prescricao-historico-section" style="display:none;margin-top:24px">
-          <div style="font-size:13px;font-weight:600;color:var(--gray-800);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--gray-200)">Histórico de Prescrições</div>
-          <div id="historico-pac-list"></div>
         </div>
-
         <!-- TAB: RESULTADOS -->
         <div class="tab-pane" id="pane-resultados">
           <div style="display:flex;gap:0;height:calc(100vh - 200px);min-height:500px">
@@ -2997,20 +2996,6 @@ textarea{resize:vertical;min-height:100px}
                 </div>
               </div>
               <div id="supl-lista"></div>
-            </div>
-            <!-- Histórico lateral -->
-            <div id="supl-hist-panel" style="display:none;width:260px;flex-shrink:0">
-              <div class="card" style="position:sticky;top:0">
-                <div class="card-header" style="background:var(--gray-50);padding:10px 14px">
-                  <h2 style="font-size:12px">Histórico de Protocolos</h2>
-                  <div style="display:flex;gap:6px;align-items:center">
-                    <button onclick="exportarProtocoloSelecionado()" title="Exportar protocolo seleccionado" style="background:none;border:1px solid var(--gray-200);border-radius:5px;cursor:pointer;padding:3px 7px;font-size:11px;color:var(--blue)">⬇ PDF</button>
-                    <button onclick="fecharHistoricoSupl()" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:16px">×</button>
-                  </div>
-                </div>
-                <div id="supl-hist-lista" style="max-height:500px;overflow-y:auto"></div>
-              </div>
-            </div>
           </div>
         </div>
 
