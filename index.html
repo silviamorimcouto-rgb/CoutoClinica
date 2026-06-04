@@ -3830,16 +3830,17 @@ function guardarHistorico(){
 function toggleHistoricoPresc(){
   const el = document.getElementById('prescricao-historico-section');
   const btn = document.getElementById('btn-toggle-hist-presc');
-  if(!el) return;
-  const isOpen = el.style.display !== 'none';
+  if(!el){ console.error('prescricao-historico-section not found'); return; }
+  const isOpen = el.style.display === 'block';
   el.style.display = isOpen ? 'none' : 'block';
   if(btn) btn.textContent = isOpen ? '📋 Ver Histórico' : '📋 Ocultar Histórico';
-  if(!isOpen) renderHistoricoPac();
+  if(!isOpen) setTimeout(function(){ renderHistoricoPac(); }, 50);
 }
 
 function renderHistoricoPac(){
   if(!pacienteAtivo)return;
   const el=document.getElementById('historico-pac-list');
+  if(!el)return;
   const items=historico.filter(h=>h.pacienteId===pacienteAtivo.id);
   if(!items.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--gray-400);font-size:13px">Nenhuma prescrição guardada para este paciente.</div>';return;}
   el.innerHTML=items.map(h=>{
