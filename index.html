@@ -2641,6 +2641,21 @@ textarea{resize:vertical;min-height:100px}
     padding: 12px !important;
     gap: 10px !important;
   }
+  #profile-action-btns {
+    width: 100% !important;
+    margin-left: 0 !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+  }
+  #profile-action-btns .btn {
+    flex: 1 1 auto !important;
+    min-width: 52px !important;
+    max-width: 80px !important;
+    font-size: 11px !important;
+    padding: 8px 4px !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
   .profile-tabs {
     overflow-x: auto !important;
     flex-wrap: nowrap !important;
@@ -2872,11 +2887,11 @@ textarea{resize:vertical;min-height:100px}
             <div class="profile-nome" id="profile-nome">—</div>
             <div class="profile-sub" id="profile-sub"></div>
           </div>
-          <div style="margin-left:auto;display:flex;gap:6px">
-            <button class="btn btn-ghost" onclick="gerarRelatorioIA()" style="font-size:12px;padding:5px 12px;background:#F0F7FF;color:var(--navy);border-color:var(--blue-light)">🤖 IA</button>
-            <button class="btn btn-ghost" onclick="gerarRelatorioWord()" style="font-size:12px;padding:5px 12px;background:#E8F5EE;color:#1E6B3A;border-color:#A8D5B8">📄 Word</button>
-            <button class="btn btn-ghost" onclick="gerarRelatorioPDF()" style="font-size:12px;padding:5px 12px;background:#FDECEA;color:#B02020;border-color:#F5C6C3">📋 PDF</button>
-            <button class="btn btn-ghost" onclick="editarPacienteAtivo()" style="font-size:12px;padding:5px 12px">Editar</button>
+          <div id="profile-action-btns" style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn btn-ghost" onclick="gerarRelatorioIA()" style="font-size:12px;padding:5px 10px;background:#F0F7FF;color:var(--navy);border-color:var(--blue-light)">🤖 IA</button>
+            <button class="btn btn-ghost" onclick="gerarRelatorioWord()" style="font-size:12px;padding:5px 10px;background:#E8F5EE;color:#1E6B3A;border-color:#A8D5B8">📄 Word</button>
+            <button class="btn btn-ghost" onclick="gerarRelatorioPDF()" style="font-size:12px;padding:5px 10px;background:#FDECEA;color:#B02020;border-color:#F5C6C3">📋 PDF</button>
+            <button class="btn btn-ghost" onclick="editarPacienteAtivo()" style="font-size:12px;padding:5px 10px">Editar</button>
             <button class="btn btn-danger" onclick="eliminarPacienteAtivo()" style="font-size:12px;padding:5px 10px">Apagar</button>
           </div>
         </div>
