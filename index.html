@@ -2798,7 +2798,7 @@ textarea{resize:vertical;min-height:100px}
           <div class="profile-tab" onclick="switchTab('suplementos')" id="tab-suplementos">💊 Suplementação</div>
           <div class="profile-tab" onclick="switchTab('notas')" id="tab-notas">📝 Notas</div>
           <div class="profile-tab" onclick="switchTab('documentos')" id="tab-documentos">📎 Documentos</div>
-          <div class="profile-tab" onclick="switchTab('historico')" id="tab-historico">Histórico</div>
+
         </div>
       </div>
       <div class="profile-content">
@@ -2818,6 +2818,7 @@ textarea{resize:vertical;min-height:100px}
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
             <div style="font-size:13px;color:var(--gray-600)">Selecciona as análises e gera a prescrição</div>
             <div style="display:flex;gap:8px">
+              <button class="btn btn-secondary" onclick="toggleHistoricoPresc()" id="btn-toggle-hist-presc">📋 Ver Histórico</button>
               <button class="btn btn-secondary" onclick="clearPrescricao()">Limpar</button>
               <button class="btn btn-primary" onclick="gerarDocumento()">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -2873,6 +2874,12 @@ textarea{resize:vertical;min-height:100px}
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- HISTORICO dentro da Prescrição -->
+        <div id="prescricao-historico-section" style="display:none;margin-top:24px">
+          <div style="font-size:13px;font-weight:600;color:var(--gray-800);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--gray-200)">Histórico de Prescrições</div>
+          <div id="historico-pac-list"></div>
         </div>
 
         <!-- TAB: RESULTADOS -->
@@ -2947,9 +2954,7 @@ textarea{resize:vertical;min-height:100px}
         </div>
 
 <!-- TAB: HISTÓRICO -->
-        <div class="tab-pane" id="pane-historico">
-          <div id="historico-pac-list"></div>
-        </div>
+    
 
         <!-- TAB: NOTAS -->
         <div class="tab-pane" id="pane-notas">
@@ -3490,7 +3495,7 @@ function switchTab(tab){
   // resumo tab removed
   if(tab==='prescricao')renderPrescricao();
   if(tab==='resultados')renderResultadosTab();
-  if(tab==='historico')renderHistoricoPac();
+
   if(tab==='notas')renderNotasTab();
   if(tab==='documentos')renderDocumentos();
   if(tab==='suplementos')renderSuplementosTab();
@@ -3756,7 +3761,9 @@ function abrirModalNovoPaciente(id=null){
     document.getElementById('m-utente').value=p.utente||'';
     document.getElementById('m-seguro').value=p.seguro||'';document.getElementById('m-nasc').value=p.nasc||'';
     document.getElementById('m-sexo').value=p.sexo||'';document.getElementById('m-tel').value=p.tel||'';
-    document.getElementById('m-notas').value=p.notas||'';
+    const _nLocal = JSON.parse(localStorage.getItem('cs_notas')||'{}');
+    const _nPac = _nLocal[p.id] || [];
+    document.getElementById('m-notas').value = _nPac.length ? _nPac[_nPac.length-1].texto : '';
   }else{
     ['m-nome','m-nif','m-utente','m-seguro','m-nasc','m-tel','m-notas'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('m-sexo').value='';
@@ -3775,7 +3782,7 @@ function guardarPaciente(){
     tel:document.getElementById('m-tel').value.trim(),notas:document.getElementById('m-notas').value.trim()};
   if(editPacienteId){
     pacientes=pacientes.map(x=>x.id===editPacienteId?p:x);
-    supa('PATCH','pacientes',{nome:p.nome,nif:p.nif,utente:p.utente,seguro:p.seguro,nasc:p.nasc,sexo:p.sexo,tel:p.tel,notas:p.notas},`?id=eq.${editPacienteId}`).catch(e=>console.error(e));
+    supa('PATCH','pacientes',{nome:p.nome,nif:p.nif,utente:p.utente,seguro:p.seguro,nasc:p.nasc,sexo:p.sexo,tel:p.tel},`?id=eq.${editPacienteId}`).catch(e=>console.error(e));
     if(pacienteAtivo?.id===editPacienteId){pacienteAtivo=p;abrirPerfil(p.id);}
   }else{
     pacientes.push(p);
@@ -3818,6 +3825,16 @@ function guardarHistorico(){
       btn.innerHTML='<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg> Guardar no Histórico';
     },3000);}
   showToast('Prescrição guardada! ✓');
+}
+
+function toggleHistoricoPresc(){
+  const el = document.getElementById('prescricao-historico-section');
+  const btn = document.getElementById('btn-toggle-hist-presc');
+  if(!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if(btn) btn.textContent = isOpen ? '📋 Ver Histórico' : '📋 Ocultar Histórico';
+  if(!isOpen) renderHistoricoPac();
 }
 
 function renderHistoricoPac(){
@@ -4710,10 +4727,8 @@ function guardarNotas(){
   // Keep last 20 versions
   if(todasNotas[pacId].length > 20) todasNotas[pacId] = todasNotas[pacId].slice(-20);
   localStorage.setItem('cs_notas', JSON.stringify(todasNotas));
-  // Sync to Supabase — store as paciente notas field
-  const notasStr = texto;
-  supa('PATCH','pacientes',{notas:notasStr},`?id=eq.${pacId}`)
-    .catch(e=>console.error('Supabase notas:',e));
+  // Notas clinicas saved only in localStorage (cs_notas), not in paciente.notas column
+  // This avoids overwriting supl data
   showToast('Notas guardadas! ✓');
   renderNotasTab();
 }
