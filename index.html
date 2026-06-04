@@ -5429,7 +5429,24 @@ function gerarRelatorioIA(){
   const hoje = new Date().toLocaleDateString('pt-PT');
   const allRef = getRefFinal();
   const hist = (resultados[pac.id] || []).slice().sort(function(a,b){return a.data.localeCompare(b.data);});
-  const supl = suplAtivo || [];
+  // Load supl from localStorage to ensure it's available even if tab wasn't visited
+  let supl = suplAtivo || [];
+  if(!supl.length && pacienteAtivo){
+    const _todosSupl = JSON.parse(localStorage.getItem('cs_supl')||'{}');
+    const _suplPac = _todosSupl[pacienteAtivo.id];
+    if(_suplPac){
+      // Handle both flat array and old protocol format
+      if(Array.isArray(_suplPac) && _suplPac.length && _suplPac[0].lista){
+        supl = _suplPac[_suplPac.length-1].lista || [];
+      } else {
+        supl = _suplPac;
+      }
+    }
+    // Fallback to paciente.supl from Supabase
+    if(!supl.length && pacienteAtivo.supl){
+      try{ supl = JSON.parse(pacienteAtivo.supl); }catch(e){}
+    }
+  }
   let idadeStr = 'N/D';
   if(pac.nasc){
     const nasc = new Date(pac.nasc+'T12:00:00');
@@ -5530,7 +5547,24 @@ function buildRelatorioData(){
   const pac = pacienteAtivo;
   const allRef = getRefFinal();
   const hist = (resultados[pac.id] || []).slice().sort(function(a,b){return a.data.localeCompare(b.data);});
-  const supl = suplAtivo || [];
+  // Load supl from localStorage to ensure it's available even if tab wasn't visited
+  let supl = suplAtivo || [];
+  if(!supl.length && pacienteAtivo){
+    const _todosSupl = JSON.parse(localStorage.getItem('cs_supl')||'{}');
+    const _suplPac = _todosSupl[pacienteAtivo.id];
+    if(_suplPac){
+      // Handle both flat array and old protocol format
+      if(Array.isArray(_suplPac) && _suplPac.length && _suplPac[0].lista){
+        supl = _suplPac[_suplPac.length-1].lista || [];
+      } else {
+        supl = _suplPac;
+      }
+    }
+    // Fallback to paciente.supl from Supabase
+    if(!supl.length && pacienteAtivo.supl){
+      try{ supl = JSON.parse(pacienteAtivo.supl); }catch(e){}
+    }
+  }
   let idade = null;
   if(pac.nasc){
     const nasc = new Date(pac.nasc+'T12:00:00');
