@@ -3417,6 +3417,11 @@ function showView(v){
 }
 
 function abrirPerfil(pacId){
+  // Auto-save supl of current patient before switching
+  if(pacienteAtivo && suplAtivo && suplAtivo.length){
+    autoSaveSupl();
+  }
+
   pacienteAtivo=pacientes.find(p=>p.id===pacId);
   if(!pacienteAtivo)return;
 
