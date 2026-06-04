@@ -4743,39 +4743,47 @@ function saveSuplLocal(data){
 function autoSaveSupl(){
   if(!pacienteAtivo) return;
   const pacId = pacienteAtivo.id;
+  const lista = JSON.parse(JSON.stringify(suplAtivo));
+  // Save to localStorage (flat array)
   const todos = getSuplPac();
-  todos[pacId] = JSON.parse(JSON.stringify(suplAtivo));
+  todos[pacId] = lista;
   saveSuplLocal(todos);
-  supa('PATCH','pacientes',{supl:JSON.stringify(suplAtivo)},`?id=eq.${pacId}`).catch(e=>console.error(e));
+  // Sync to Supabase
+  supa('PATCH','pacientes',{supl:JSON.stringify(lista)},`?id=eq.${pacId}`)
+    .then(()=>{
+      const lbl = document.getElementById('supl-data-label');
+      if(lbl) lbl.textContent = lista.length + ' suplementos · ✓ ' + new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+    })
+    .catch(e=>{ console.error('autoSaveSupl error:',e); showToast('Erro ao guardar suplementos.'); });
+  // Update in-memory paciente
   const p = pacientes.find(x=>x.id===pacId);
-  if(p) p.supl = JSON.stringify(suplAtivo);
-  const lbl = document.getElementById('supl-data-label');
-  if(lbl) lbl.textContent = suplAtivo.length + ' suplementos';
+  if(p) p.supl = JSON.stringify(lista);
 }
 
 function renderSuplementosTab(){
   if(!pacienteAtivo) return;
   const pacId = pacienteAtivo.id;
   let todos = getSuplPac();
-  // Fallback: read from pacienteAtivo.notas if not in localStorage
-  if(!todos[pacId] && pacienteAtivo.notas && pacienteAtivo.notas.startsWith('{')){
-    try{
-      const parsed = JSON.parse(pacienteAtivo.notas);
-      if(parsed.supl && parsed.supl.length){
-        todos[pacId] = parsed.supl;
-        saveSuplLocal(todos);
-      }
-    }catch(e){}
+
+  // 1. Try localStorage
+  let lista = todos[pacId];
+
+  // 2. Fallback: load from pacienteAtivo.supl (Supabase field)
+  if(!lista && pacienteAtivo.supl){
+    try{ lista = JSON.parse(pacienteAtivo.supl); }catch(e){}
   }
-  const histPac = todos[pacId] || [];
-  if(histPac.length){
-    const last = histPac[histPac.length-1];
-    suplAtivo = JSON.parse(JSON.stringify(last.lista||[]));
-    document.getElementById('supl-data-label').textContent = 'Protocolo de ' + last.data;
-  } else {
-    suplAtivo = [];
-    document.getElementById('supl-data-label').textContent = 'Nenhum protocolo guardado ainda';
+
+  // 3. Old format compat: array of {data, lista} protocols — take last
+  if(Array.isArray(lista) && lista.length && lista[0] && lista[0].lista){
+    lista = lista[lista.length-1].lista || [];
+    // Migrate to new flat format
+    todos[pacId] = lista;
+    saveSuplLocal(todos);
   }
+
+  suplAtivo = JSON.parse(JSON.stringify(lista || []));
+  const lbl = document.getElementById('supl-data-label');
+  if(lbl) lbl.textContent = suplAtivo.length ? suplAtivo.length + ' suplementos' : 'Sem suplementos';
   renderSuplLista();
 }
 
