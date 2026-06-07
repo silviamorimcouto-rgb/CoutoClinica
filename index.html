@@ -5575,9 +5575,9 @@ function gerarRelatorioIA(){
   const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
   const notasPac = todasNotas[pac.id] || [];
   if(notasPac.length){
-    txt += '## NOTAS CLINICAS\n';
-    notasPac.slice(-3).forEach(function(n){ txt += '[' + new Date(n.data).toLocaleDateString('pt-PT') + ']\n' + n.texto + '\n\n'; });
+    txt += 'Notas: ' + notasPac[notasPac.length-1].texto + '\n';
   }
+  txt += '\n';
   if(supl.length){
     txt += '## SUPLEMENTACAO\n';
     const ativos = supl.filter(function(s){return s.estado==='ativo'||!s.estado;});
@@ -5774,14 +5774,18 @@ async function gerarRelatorioWord(){
     })
   }));
 
-  // ── NOTAS ──
+  // ── NOTAS — dentro da secção de dados do paciente ──
   if(d.notasPac.length){
-    children.push(new Paragraph({spacing:{before:200,after:0},children:[]}));
-    children.push(hdr('NOTAS CLÍNICAS', AZ, 24), linha());
-    d.notasPac.forEach(function(n){
-      children.push(par('['+new Date(n.data).toLocaleDateString('pt-PT')+']',{bold:true,color:BL,size:20,before:80}));
-      children.push(par(n.texto,{size:20,color:'333333',after:80}));
-    });
+    const ultimaNota = d.notasPac[d.notasPac.length-1];
+    children.push(new Table({
+      width:{size:9200,type:WidthType.DXA},
+      columnWidths:[2800,6400],
+      borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
+      rows:[new TableRow({children:[
+        new TableCell({borders:bN,shading:{fill:LGRAY,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:120,right:80},width:{size:2800,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:'Notas Clínicas',font:'Arial',size:20,bold:true,color:AZ})],spacing:{before:20,after:20}})]}),
+        new TableCell({borders:bN,shading:{fill:LGRAY,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},width:{size:6400,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:ultimaNota.texto,font:'Arial',size:20,color:'222222'})],spacing:{before:20,after:20}})]})
+      ]})]
+    }));
   }
 
   // ── SUPLEMENTAÇÃO ──
@@ -5942,8 +5946,10 @@ function gerarRelatorioPDF(){
     +(d.pac.nif?'<tr><td>NIF</td><td>'+d.pac.nif+'</td></tr>':'')
     +(d.pac.utente?'<tr><td>Nº Utente SNS</td><td>'+d.pac.utente+'</td></tr>':'')
     +(d.pac.seguro?'<tr><td>Seguro de Saúde</td><td>'+d.pac.seguro+'</td></tr>':'')
+    +'</tbody></table>'
+    +(d.notasPac.length?'<tr><td style="font-weight:700;color:#1A3A5C;width:160px;background:#f5f8fc;padding:6px 10px;border-bottom:1px solid #eee">Notas Clínicas</td><td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:pre-wrap">'+d.notasPac[d.notasPac.length-1].texto+'</td></tr>':'')
     +'</tbody></table></section>'
-    +notasHTML
+    +''
     +(d.supl.length?'<section><h2>Suplementação Actual</h2>'+suplHTML+'</section>':'')
     +(d.resultadosGrupos.length?'<section><h2>Resultados de Análises</h2><div class="legenda"><span class="leg" style="background:#E8F5EE;color:#1E6B3A">✓ Ideal</span><span class="leg" style="background:#FDECEA;color:#B02020">↑ Alto</span><span class="leg" style="background:#FFF3CD;color:#856404">↓ Baixo</span></div>'+resHTML+'</section>':'')
     +'<div style="margin-top:20px;padding-top:10px;border-top:1px solid #eee;font-size:10px;color:#aaa;text-align:center">Relatório gerado pelo ClinicaScript · '+hoje+' · Documento Confidencial</div>'
