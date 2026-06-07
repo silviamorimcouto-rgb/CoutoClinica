@@ -5774,16 +5774,18 @@ async function gerarRelatorioWord(){
     })
   }));
 
-  // ── NOTAS — dentro da secção de dados do paciente ──
+  // ── NOTAS — como linha da tabela de dados ──
   if(d.notasPac.length){
     const ultimaNota = d.notasPac[d.notasPac.length-1];
+    // Add a separator line before notas
+    children.push(new Paragraph({spacing:{before:60,after:0},children:[]}));
     children.push(new Table({
       width:{size:9200,type:WidthType.DXA},
       columnWidths:[2800,6400],
       borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
       rows:[new TableRow({children:[
-        new TableCell({borders:bN,shading:{fill:LGRAY,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:120,right:80},width:{size:2800,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:'Notas Clínicas',font:'Arial',size:20,bold:true,color:AZ})],spacing:{before:20,after:20}})]}),
-        new TableCell({borders:bN,shading:{fill:LGRAY,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},width:{size:6400,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:ultimaNota.texto,font:'Arial',size:20,color:'222222'})],spacing:{before:20,after:20}})]})
+        new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:80,bottom:80,left:120,right:80},width:{size:2800,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:'Notas Clínicas',font:'Arial',size:20,bold:true,color:AZ})],spacing:{before:20,after:20}})]}),
+        new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:80,bottom:80,left:80,right:80},width:{size:6400,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:ultimaNota.texto,font:'Arial',size:20,color:'333333',italics:true})],spacing:{before:20,after:20}})]})
       ]})]
     }));
   }
@@ -5947,7 +5949,7 @@ function gerarRelatorioPDF(){
     +(d.pac.utente?'<tr><td>Nº Utente SNS</td><td>'+d.pac.utente+'</td></tr>':'')
     +(d.pac.seguro?'<tr><td>Seguro de Saúde</td><td>'+d.pac.seguro+'</td></tr>':'')
     +'</tbody></table>'
-    +(d.notasPac.length?'<tr><td style="font-weight:700;color:#1A3A5C;width:160px;background:#f5f8fc;padding:6px 10px;border-bottom:1px solid #eee">Notas Clínicas</td><td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:pre-wrap">'+d.notasPac[d.notasPac.length-1].texto+'</td></tr>':'')
+    +(d.notasPac.length?'<tr><td style="font-weight:700;color:#1A3A5C;width:160px;background:#f5f8fc;padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top">Notas Clínicas</td><td style="padding:8px 10px;border-bottom:1px solid #eee;white-space:pre-wrap;line-height:1.6;font-size:12px">'+d.notasPac[d.notasPac.length-1].texto+'</td></tr>':'')
     +'</tbody></table></section>'
     +''
     +(d.supl.length?'<section><h2>Suplementação Actual</h2>'+suplHTML+'</section>':'')
