@@ -5680,7 +5680,9 @@ function buildRelatorioData(){
     idade = age;
   }
   const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
-  const notasPac = (todasNotas[pac.id] || []).slice(-3);
+  // Get most recent note only (guardarNotas saves a new entry each time)
+  const _todasNotasArr = todasNotas[pac.id] || [];
+  const notasPac = _todasNotasArr.length ? [_todasNotasArr[_todasNotasArr.length-1]] : [];
   // Build results grouped by profile
   const sexo = pac.sexo || 'f';
   const perfisVis = {};
