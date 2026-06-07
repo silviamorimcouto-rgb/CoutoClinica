@@ -2820,6 +2820,8 @@ textarea{resize:vertical;min-height:100px}
   .modal { max-height: 96vh !important; }
 }
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -5896,10 +5898,104 @@ async function gerarRelatorioWord(){
   }catch(e){console.error(e);showToast('Erro ao gerar Word.');}
 }
 
+
+function gerarRelatorioPDFMobile(d){
+  showToast('A gerar PDF...', 8000);
+  const hoje = new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
+
+  // Build HTML content (same as desktop but without print dialog)
+  let suplHTML = '';
+  if(d.supl && d.supl.length){
+    const ativos = d.supl.filter(function(s){return s.estado==='ativo'||!s.estado;});
+    const pausados = d.supl.filter(function(s){return s.estado==='pausado';});
+    const desc = d.supl.filter(function(s){return s.estado==='descontinuado';});
+    function suplSec(lista,label,bg,color){
+      if(!lista.length) return '';
+      return '<div style="margin-bottom:10px"><div style="background:'+bg+';color:'+color+';padding:4px 10px;font-size:10px;font-weight:700;margin-bottom:4px">'+label+' ('+lista.length+')</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr style="background:#f5f5f5"><th style="padding:4px 6px;text-align:left">Suplemento</th><th style="padding:4px 6px;text-align:center">Dose</th><th style="padding:4px 6px;text-align:center">Freq.</th><th style="padding:4px 6px;text-align:left">Notas</th></tr></thead><tbody>'+lista.map(function(s,i){return '<tr style="background:'+(i%2?'white':'#fafafa')+'"><td style="padding:4px 6px;font-weight:600">'+s.nome+'</td><td style="padding:4px 6px;text-align:center;color:#2E6DA4;font-weight:600">'+(s.dose||'')+' '+(s.unidade||'')+'</td><td style="padding:4px 6px;text-align:center">'+(s.freq||'')+'</td><td style="padding:4px 6px;color:#888;font-style:italic">'+(s.notas||'')+'</td></tr>';}).join('')+'</tbody></table></div>';
+    }
+    suplHTML = suplSec(ativos,'ATIVOS','#E8F5EE','#1E6B3A')+suplSec(pausados,'PAUSADOS','#FFF3CD','#856404')+suplSec(desc,'DESCONTINUADOS','#FDECEA','#B02020');
+  }
+
+  let resHTML = '';
+  if(d.resultadosGrupos && d.resultadosGrupos.length){
+    const datas = d.hist.map(function(h){return h.data;});
+    resHTML = d.resultadosGrupos.map(function(grupo){
+      return '<div style="margin-bottom:12px"><div style="background:#2E6DA4;color:white;padding:4px 8px;font-size:9px;font-weight:700">'+grupo.perfil+'</div><table style="width:100%;border-collapse:collapse;font-size:9px"><thead><tr style="background:#f0f4f8"><th style="padding:3px 5px;text-align:left">Análise</th><th style="padding:3px 5px;text-align:left;color:#888">Ref.</th>'+datas.map(function(dt){return '<th style="padding:3px 5px;text-align:center">'+dt+'</th>';}).join('')+'</tr></thead><tbody>'+grupo.rows.map(function(row,i){
+        return '<tr style="background:'+(i%2?'white':'#f9f9f9')+'"><td style="padding:3px 5px;font-weight:600">'+row.nome+'</td><td style="padding:3px 5px;font-size:8px;color:#888">'+row.ref+'</td>'+datas.map(function(dt){
+          const entry = row.vals.find(function(v){return v.data===dt;});
+          if(!entry) return '<td style="padding:3px 5px;text-align:center;color:#ccc">—</td>';
+          let color='#1E6B3A'; let bg='#E8F5EE';
+          if(row.status==='baixo'){color='#856404';bg='#FFF3CD';}
+          else if(row.status==='alto'){color='#B02020';bg='#FDECEA';}
+          return '<td style="padding:3px 5px;text-align:center;background:'+bg+';color:'+color+';font-weight:600">'+entry.val+'</td>';
+        }).join('')+'</tr>';
+      }).join('')+'</tbody></table></div>';
+    }).join('');
+  }
+
+  const notasHTML = d.notasPac && d.notasPac.length ?
+    '<section><h2 style="font-size:13px;font-weight:700;color:#1A3A5C;margin:14px 0 6px;padding-bottom:4px;border-bottom:2px solid #2E6DA4">Notas Clínicas</h2><div style="background:#F0F4F8;border-left:4px solid #2E6DA4;padding:10px 12px;font-size:11px;line-height:1.6;white-space:pre-wrap">'+d.notasPac[d.notasPac.length-1].texto+'</div></section>' : '';
+
+  const fullHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:16px;color:#1e2d3d;font-size:11px}h2{font-size:13px;font-weight:700;color:#1A3A5C;margin:14px 0 6px;padding-bottom:4px;border-bottom:2px solid #2E6DA4}.header{background:#1A3A5C;color:white;padding:12px 16px;border-radius:6px;margin-bottom:14px}.header h1{font-size:16px;font-weight:700;margin-bottom:4px}.meta{font-size:10px;opacity:0.85}table{border-collapse:collapse;width:100%}section{margin-bottom:14px}.dados-table td{padding:5px 8px;font-size:11px;border-bottom:1px solid #eee}.dados-table td:first-child{font-weight:700;color:#1A3A5C;width:140px;background:#f5f8fc}</style></head><body>'
+    +'<div class="header"><h1>RELATÓRIO CLÍNICO</h1><div class="meta">'+d.pac.nome+' · '+(d.pac.sexo==='f'?'Feminino':'Masculino')+(d.idade!=null?' · '+d.idade+' anos':'')+'<br>'+hoje+'</div></div>'
+    +'<section><h2>Dados do Paciente</h2><table class="dados-table"><tbody>'
+    +'<tr><td>Nome</td><td>'+d.pac.nome+'</td></tr>'
+    +'<tr><td>Sexo</td><td>'+(d.pac.sexo==='f'?'Feminino':'Masculino')+'</td></tr>'
+    +(d.idade!=null?'<tr><td>Idade</td><td>'+d.idade+' anos</td></tr>':'')
+    +(d.pac.nasc?'<tr><td>Nascimento</td><td>'+new Date(d.pac.nasc+'T12:00:00').toLocaleDateString('pt-PT')+'</td></tr>':'')
+    +(d.pac.nif?'<tr><td>NIF</td><td>'+d.pac.nif+'</td></tr>':'')
+    +(d.pac.utente?'<tr><td>Nº Utente SNS</td><td>'+d.pac.utente+'</td></tr>':'')
+    +(d.pac.seguro?'<tr><td>Seguro</td><td>'+d.pac.seguro+'</td></tr>':'')
+    +'</tbody></table></section>'
+    +notasHTML
+    +(d.supl&&d.supl.length?'<section><h2>Suplementação Actual</h2>'+suplHTML+'</section>':'')
+    +(d.resultadosGrupos&&d.resultadosGrupos.length?'<section><h2>Resultados de Análises</h2>'+resHTML+'</section>':'')
+    +'<div style="margin-top:14px;padding-top:8px;border-top:1px solid #eee;font-size:9px;color:#aaa;text-align:center">ClinicaScript · '+hoje+' · Confidencial</div>'
+    +'</body></html>';
+
+  // Create hidden iframe, render HTML, then use jsPDF + html2canvas
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:white;z-index:-1';
+  container.innerHTML = fullHTML;
+  document.body.appendChild(container);
+
+  setTimeout(function(){
+    html2canvas(container, {scale:1.5, useCORS:true, logging:false, width:800}).then(function(canvas){
+      const imgData = canvas.toDataURL('image/jpeg', 0.85);
+      const {jsPDF} = window.jspdf;
+      const pdf = new jsPDF('p','mm','a4');
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = pdf.internal.pageSize.getHeight();
+      const imgW = pdfW;
+      const imgH = canvas.height * pdfW / canvas.width;
+      let heightLeft = imgH;
+      let position = 0;
+      pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
+      heightLeft -= pdfH;
+      while(heightLeft > 0){
+        position = heightLeft - imgH;
+        pdf.addPage();
+        pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
+        heightLeft -= pdfH;
+      }
+      pdf.save('Relatorio_'+d.pac.nome.replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.pdf');
+      document.body.removeChild(container);
+      showToast('PDF guardado! ✓');
+    }).catch(function(e){
+      console.error(e);
+      document.body.removeChild(container);
+      showToast('Erro ao gerar PDF.');
+    });
+  }, 300);
+}
+
 function gerarRelatorioPDF(){
   if(!pacienteAtivo){showToast('Nenhum paciente activo.');return;}
   const d = buildRelatorioData();
   if(!d) return;
+  // On mobile, use jsPDF directly (window.print() doesn't work on iOS)
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if(isMobile){ gerarRelatorioPDFMobile(d); return; }
   const hoje = new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
 
   let suplHTML = '';
