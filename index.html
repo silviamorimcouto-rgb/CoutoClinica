@@ -3484,7 +3484,7 @@ function save(){
 }
 function css(s){return s.replace(/[^a-zA-Z0-9]/g,'_')}
 function esc(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
-function fmt2(v){const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?String(v):parseFloat(n.toFixed(2)).toString()}
+function fmt2(v){const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?String(v):n.toFixed(2)}
 function parseFloatSafe(v){const n=parseFloat(v);return isNaN(n)?null:n}
 function showToast(msg,d=2600){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d)}
 function fecharModal(id){document.getElementById(id).classList.remove('open')}
@@ -3647,7 +3647,7 @@ function renderResumo(){
   entries.forEach(([nome,v])=>{
     const ref=allRef.find(a=>a.nome===nome);
     if(!ref)return;
-    const n=parseFloat(String(v.valor).replace(',','.'));
+    const n=parseFloat(parseFloat(String(v.valor).replace(',','.')).toFixed(2));
     if(isNaN(n))return;
     const minV=sexo==='f'?ref.min_f:ref.min_m;
     const maxV=sexo==='f'?ref.max_f:ref.max_m;
@@ -5610,7 +5610,7 @@ function gerarRelatorioIA(){
           const v = h.valores&&h.valores[a.nome];
           if(!v||v.valor===''||v.valor===undefined) return null;
           const n = parseFloat(String(v.valor).replace(',','.'));
-          return isNaN(n)?null:{data:h.data,val:n};
+          return isNaN(n)?null:{data:h.data,val:parseFloat(n.toFixed(2))};
         }).filter(Boolean);
         if(!vals.length) return;
         const last = vals[vals.length-1];
@@ -5705,7 +5705,7 @@ function buildRelatorioData(){
         const v = h.valores&&h.valores[a.nome];
         if(!v||v.valor===''||v.valor===undefined) return null;
         const n = parseFloat(String(v.valor).replace(',','.'));
-        return isNaN(n)?null:{data:h.data,val:n,unit:v.unidade||unit};
+        return isNaN(n)?null:{data:h.data,val:parseFloat(n.toFixed(2)),unit:v.unidade||unit};
       }).filter(Boolean);
       if(!vals.length) return;
       const last = vals[vals.length-1];
