@@ -2820,9 +2820,7 @@ textarea{resize:vertical;min-height:100px}
   .modal { max-height: 96vh !important; }
 }
 </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-</head>
+  </head>
 <body>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
@@ -5973,6 +5971,10 @@ async function gerarRelatorioWord(){
 
 
 function gerarRelatorioPDFMobile(d){
+  if(typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined'){
+    showToast('A carregar ferramentas de PDF, tenta novamente em alguns segundos...', 3000);
+    return;
+  }
   showToast('A gerar PDF...', 8000);
   const hoje = new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
 
@@ -6325,5 +6327,7 @@ function renderEvoGrid(){
 }
 
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 </body>
 </html>
