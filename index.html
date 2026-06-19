@@ -5992,17 +5992,32 @@ function gerarRelatorioPDFMobile(d){
   let resHTML = '';
   if(d.resultadosGrupos && d.resultadosGrupos.length){
     const datas = d.hist.map(function(h){return h.data;});
+    const nCols = datas.length;
+    const nomeColW = 22; const refColW = 14; const valColW = nCols ? ((100 - nomeColW - refColW) / nCols) : 0;
     resHTML = d.resultadosGrupos.map(function(grupo){
-      return '<div style="margin-bottom:12px"><div style="background:#2E6DA4;color:white;padding:4px 8px;font-size:9px;font-weight:700">'+grupo.perfil+'</div><table style="width:100%;border-collapse:collapse;font-size:9px"><thead><tr style="background:#f0f4f8"><th style="padding:3px 5px;text-align:left">Análise</th><th style="padding:3px 5px;text-align:left;color:#888">Ref.</th>'+datas.map(function(dt){return '<th style="padding:3px 5px;text-align:center">'+dt+'</th>';}).join('')+'</tr></thead><tbody>'+grupo.rows.map(function(row,i){
-        return '<tr style="background:'+(i%2?'white':'#f9f9f9')+'"><td style="padding:3px 5px;font-weight:600">'+row.nome+'</td><td style="padding:3px 5px;font-size:8px;color:#888">'+row.ref+'</td>'+datas.map(function(dt){
-          const entry = row.vals.find(function(v){return v.data===dt;});
-          if(!entry) return '<td style="padding:3px 5px;text-align:center;color:#ccc">—</td>';
-          let color='#1E6B3A'; let bg='#E8F5EE';
-          if(row.status==='baixo'){color='#856404';bg='#FFF3CD';}
-          else if(row.status==='alto'){color='#B02020';bg='#FDECEA';}
-          return '<td style="padding:3px 5px;text-align:center;background:'+bg+';color:'+color+';font-weight:600">'+entry.val+'</td>';
-        }).join('')+'</tr>';
-      }).join('')+'</tbody></table></div>';
+      return '<div style="margin-bottom:14px;page-break-inside:avoid"><div style="background:#2E6DA4;color:white;padding:5px 8px;font-size:9px;font-weight:700;letter-spacing:0.3px">'+grupo.perfil+'</div>'
+        +'<table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px">'
+        +'<colgroup><col style="width:'+nomeColW+'%"><col style="width:'+refColW+'%">'+datas.map(function(){return '<col style="width:'+valColW+'%">';}).join('')+'</colgroup>'
+        +'<thead><tr style="background:#f0f4f8;border-bottom:1px solid #d8e0e8">'
+        +'<th style="padding:4px 6px;text-align:left;overflow:hidden">Análise</th>'
+        +'<th style="padding:4px 6px;text-align:left;color:#888;overflow:hidden">Ref.</th>'
+        +datas.map(function(dt){return '<th style="padding:4px 4px;text-align:center;overflow:hidden;font-size:8px">'+dt+'</th>';}).join('')
+        +'</tr></thead><tbody>'
+        +grupo.rows.map(function(row,i){
+          return '<tr style="background:'+(i%2?'white':'#f9f9f9')+';border-bottom:1px solid #f0f0f0">'
+            +'<td style="padding:4px 6px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+row.nome+'</td>'
+            +'<td style="padding:4px 6px;font-size:8px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+row.ref+'</td>'
+            +datas.map(function(dt){
+              const entry = row.vals.find(function(v){return v.data===dt;});
+              if(!entry) return '<td style="padding:4px 4px;text-align:center;color:#ccc">—</td>';
+              let color='#1E6B3A'; let bg='#E8F5EE';
+              if(row.status==='baixo'){color='#856404';bg='#FFF3CD';}
+              else if(row.status==='alto'){color='#B02020';bg='#FDECEA';}
+              return '<td style="padding:4px 4px;text-align:center;background:'+bg+';color:'+color+';font-weight:700">'+entry.val+'</td>';
+            }).join('')
+            +'</tr>';
+        }).join('')
+        +'</tbody></table></div>';
     }).join('');
   }
 
@@ -6086,19 +6101,30 @@ function gerarRelatorioPDF(){
   let resHTML = '';
   if(d.resultadosGrupos.length){
     const datas = d.hist.map(function(h){return h.data;});
+    const nCols2 = datas.length;
+    const nomeColW2 = 24; const refColW2 = 16; const valColW2 = nCols2 ? ((100 - nomeColW2 - refColW2) / nCols2) : 0;
     resHTML = d.resultadosGrupos.map(function(grupo){
-      return '<div style="margin-bottom:16px"><div style="background:#2E6DA4;color:white;padding:5px 10px;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase">'+grupo.perfil+'</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr style="background:#f0f4f8"><th style="padding:5px 8px;text-align:left">Análise</th><th style="padding:5px 8px;text-align:left;color:#888">Referência</th>'+datas.map(function(dt){return '<th style="padding:5px 8px;text-align:center">'+dt+'</th>';}).join('')+'</tr></thead><tbody>'+grupo.rows.map(function(row,i){
-        const bg = i%2?'white':'#f9f9f9';
-        const cells = datas.map(function(dt){
-          const entry = row.vals.find(function(v){return v.data===dt;});
-          if(!entry) return '<td style="padding:5px 8px;text-align:center;color:#ccc">—</td>';
-          let color = '#1E6B3A'; let cellBg = '#E8F5EE';
-          if(row.status==='baixo'){color='#856404';cellBg='#FFF3CD';}
-          else if(row.status==='alto'){color='#B02020';cellBg='#FDECEA';}
-          return '<td style="padding:5px 8px;text-align:center;background:'+cellBg+';color:'+color+';font-weight:600">'+entry.val+' '+(entry.unit||row.unit||'')+'</td>';
-        }).join('');
-        return '<tr style="background:'+bg+'"><td style="padding:5px 8px;font-weight:600">'+row.nome+(row.unit?'<span style="font-size:9px;color:#888;margin-left:4px">'+row.unit+'</span>':'')+'</td><td style="padding:5px 8px;font-size:9px;color:#888">'+row.ref+'</td>'+cells+'</tr>';
-      }).join('')+'</tbody></table></div>';
+      return '<div style="margin-bottom:16px;page-break-inside:avoid"><div style="background:#2E6DA4;color:white;padding:5px 10px;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase">'+grupo.perfil+'</div>'
+        +'<table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px">'
+        +'<colgroup><col style="width:'+nomeColW2+'%"><col style="width:'+refColW2+'%">'+datas.map(function(){return '<col style="width:'+valColW2+'%">';}).join('')+'</colgroup>'
+        +'<thead><tr style="background:#f0f4f8;border-bottom:1px solid #d8e0e8">'
+        +'<th style="padding:6px 8px;text-align:left;overflow:hidden">Análise</th>'
+        +'<th style="padding:6px 8px;text-align:left;color:#888;overflow:hidden">Referência</th>'
+        +datas.map(function(dt){return '<th style="padding:6px 6px;text-align:center;overflow:hidden">'+dt+'</th>';}).join('')
+        +'</tr></thead><tbody>'
+        +grupo.rows.map(function(row,i){
+          const bg = i%2?'white':'#f9f9f9';
+          const cells = datas.map(function(dt){
+            const entry = row.vals.find(function(v){return v.data===dt;});
+            if(!entry) return '<td style="padding:6px 6px;text-align:center;color:#ccc">—</td>';
+            let color = '#1E6B3A'; let cellBg = '#E8F5EE';
+            if(row.status==='baixo'){color='#856404';cellBg='#FFF3CD';}
+            else if(row.status==='alto'){color='#B02020';cellBg='#FDECEA';}
+            return '<td style="padding:6px 6px;text-align:center;background:'+cellBg+';color:'+color+';font-weight:700">'+entry.val+(entry.unit||row.unit?' <span style="font-size:8px;font-weight:400">'+(entry.unit||row.unit)+'</span>':'')+'</td>';
+          }).join('');
+          return '<tr style="background:'+bg+';border-bottom:1px solid #f0f0f0"><td style="padding:6px 8px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+row.nome+'</td><td style="padding:6px 8px;font-size:9px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+row.ref+'</td>'+cells+'</tr>';
+        }).join('')
+        +'</tbody></table></div>';
     }).join('');
   }
 
