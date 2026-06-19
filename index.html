@@ -2600,17 +2600,16 @@ textarea{resize:vertical;min-height:100px}
   /* Sidebar collapses to bottom nav */
   .sidebar {
     position: fixed !important;
-    top: 0 !important;
-    bottom: auto !important;
+    bottom: 0 !important;
     left: 0 !important;
+    top: auto !important;
     width: 100% !important;
-    height: 56px !important;
+    height: 60px !important;
     flex-direction: row !important;
     padding: 0 !important;
     overflow: hidden !important;
     z-index: 1000;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    border-top: none !important;
+    border-top: 1px solid rgba(255,255,255,0.1);
     border-right: none !important;
   }
   .sidebar-brand { display: none !important; }
@@ -2629,7 +2628,7 @@ textarea{resize:vertical;min-height:100px}
   .sidebar .nav-item svg { width: 20px !important; height: 20px !important; }
 
   /* Main content padding for bottom nav */
-  .main { margin-left: 0 !important; padding-top: 56px !important; padding-bottom: 20px !important; }
+  .main { margin-left: 0 !important; padding-bottom: 70px !important; }
 
   /* Topbar */
   .topbar { flex-wrap: wrap !important; gap: 8px !important; padding: 12px !important; }
@@ -2640,21 +2639,6 @@ textarea{resize:vertical;min-height:100px}
     flex-wrap: wrap !important;
     padding: 12px !important;
     gap: 10px !important;
-  }
-  #profile-action-btns {
-    width: 100% !important;
-    margin-left: 0 !important;
-    flex-wrap: wrap !important;
-    justify-content: flex-start !important;
-  }
-  #profile-action-btns .btn {
-    flex: 1 1 auto !important;
-    min-width: 52px !important;
-    max-width: 80px !important;
-    font-size: 11px !important;
-    padding: 8px 4px !important;
-    text-align: center !important;
-    justify-content: center !important;
   }
   .profile-tabs {
     overflow-x: auto !important;
@@ -2697,29 +2681,15 @@ textarea{resize:vertical;min-height:100px}
     gap: 6px !important;
   }
 
-  /* Modals — bottom sheet style */
-  .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+  /* Modals */
   .modal {
-    border-radius: 20px 20px 0 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-    max-height: 85vh !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-  .modal-header { flex-shrink: 0 !important; }
-  .modal-body {
+    width: 95vw !important;
+    max-height: 90vh !important;
+    margin: 5vh auto !important;
     overflow-y: auto !important;
-    flex: 1 !important;
-    -webkit-overflow-scrolling: touch !important;
   }
-  .modal-footer {
-    flex-shrink: 0 !important;
-    padding: 12px 16px !important;
-    background: white !important;
-    border-top: 1px solid var(--gray-200) !important;
-  }
+  .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+  .modal { border-radius: 16px 16px 0 0 !important; margin: 0 !important; width: 100% !important; max-height: 92vh !important; }
 
   /* Suplementação */
   #pane-suplementos > div { flex-direction: column !important; }
@@ -2739,88 +2709,15 @@ textarea{resize:vertical;min-height:100px}
 
   /* Hide less important cols on mobile */
   .res-cell-ref { display: none !important; }
-
-  /* Profile header — stack buttons on mobile */
-  #view-perfil .profile-header {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 12px !important;
-  }
-  #view-perfil .profile-header > div:last-child {
-    width: 100% !important;
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 6px !important;
-  }
-  #view-perfil .profile-header > div:last-child .btn {
-    flex: 1 !important;
-    min-width: 70px !important;
-    text-align: center !important;
-    justify-content: center !important;
-    font-size: 11px !important;
-    padding: 7px 8px !important;
-  }
-
-  /* Modal bottom sheet — make inputs bigger and button always visible */
-  .modal-body { padding: 16px !important; }
-  .modal-body input, .modal-body select, .modal-body textarea {
-    font-size: 16px !important;
-    padding: 12px !important;
-    min-height: 48px !important;
-  }
-  .modal-footer {
-    padding: 12px 16px !important;
-    position: sticky !important;
-    bottom: 0 !important;
-    background: white !important;
-    border-top: 1px solid var(--gray-200) !important;
-    z-index: 10 !important;
-  }
-  .modal-footer .btn {
-    min-height: 48px !important;
-    font-size: 15px !important;
-    flex: 1 !important;
-  }
-
-  /* Resultados date items — bigger tap targets */
-  .res-data-item {
-    padding: 10px 12px !important;
-    min-width: 120px !important;
-    white-space: nowrap !important;
-  }
-  .res-data-item div:first-child { font-size: 13px !important; white-space: nowrap !important; }
-
-  /* Form groups */
-  .form-group label { font-size: 12px !important; margin-bottom: 4px !important; }
-  .form-row { flex-direction: column !important; gap: 10px !important; }
-
-  /* Supl list items — bigger tap targets */
-  .supl-item { padding: 12px !important; }
-  .supl-item .btn { min-height: 36px !important; min-width: 36px !important; }
-
-  /* Prescrição toolbar wrap */
-  #pane-prescricao > div:first-child {
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-  }
-  #pane-prescricao > div:first-child .btn { flex: 1 !important; min-width: 80px !important; }
 }
 
 @media (max-width: 480px) {
   .topbar-title { font-size: 14px !important; }
   .btn { font-size: 12px !important; padding: 7px 10px !important; }
   .profile-tab { font-size: 11px !important; padding: 8px 10px !important; }
-
-  /* Even bigger inputs on small phones */
-  .modal-body input, .modal-body select, .modal-body textarea {
-    font-size: 16px !important;
-    padding: 14px 12px !important;
-  }
-  /* Modal full screen on small phones */
-  .modal { max-height: 96vh !important; }
 }
 </style>
-  </head>
+</head>
 <body>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
@@ -2887,11 +2784,8 @@ textarea{resize:vertical;min-height:100px}
             <div class="profile-nome" id="profile-nome">—</div>
             <div class="profile-sub" id="profile-sub"></div>
           </div>
-          <div id="profile-action-btns" style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-            <button class="btn btn-ghost" onclick="gerarRelatorioIA()" style="font-size:12px;padding:5px 10px;background:#F0F7FF;color:var(--navy);border-color:var(--blue-light)">🤖 IA</button>
-            <button class="btn btn-ghost" onclick="gerarRelatorioWord()" style="font-size:12px;padding:5px 10px;background:#E8F5EE;color:#1E6B3A;border-color:#A8D5B8">📄 Word</button>
-            <button class="btn btn-ghost" onclick="gerarRelatorioPDF()" style="font-size:12px;padding:5px 10px;background:#FDECEA;color:#B02020;border-color:#F5C6C3">📋 PDF</button>
-            <button class="btn btn-ghost" onclick="editarPacienteAtivo()" style="font-size:12px;padding:5px 10px">Editar</button>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn btn-ghost" onclick="editarPacienteAtivo()" style="font-size:12px;padding:5px 12px">Editar</button>
             <button class="btn btn-danger" onclick="eliminarPacienteAtivo()" style="font-size:12px;padding:5px 10px">Apagar</button>
           </div>
         </div>
@@ -2901,7 +2795,7 @@ textarea{resize:vertical;min-height:100px}
           <div class="profile-tab" onclick="switchTab('suplementos')" id="tab-suplementos">💊 Suplementação</div>
           <div class="profile-tab" onclick="switchTab('notas')" id="tab-notas">📝 Notas</div>
           <div class="profile-tab" onclick="switchTab('documentos')" id="tab-documentos">📎 Documentos</div>
-
+          <div class="profile-tab" onclick="switchTab('historico')" id="tab-historico">Histórico</div>
         </div>
       </div>
       <div class="profile-content">
@@ -2921,18 +2815,12 @@ textarea{resize:vertical;min-height:100px}
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
             <div style="font-size:13px;color:var(--gray-600)">Selecciona as análises e gera a prescrição</div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-secondary" onclick="toggleHistoricoPresc()" id="btn-toggle-hist-presc">📋 Ver Histórico</button>
               <button class="btn btn-secondary" onclick="clearPrescricao()">Limpar</button>
               <button class="btn btn-primary" onclick="gerarDocumento()">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 Gerar Word
               </button>
             </div>
-          </div>
-          <!-- HISTORICO dentro da Prescrição -->
-          <div id="prescricao-historico-section" style="display:none;margin-bottom:20px;border:1px solid var(--gray-200);border-radius:10px;padding:16px">
-            <div style="font-size:13px;font-weight:600;color:var(--gray-800);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--gray-200)">Histórico de Prescrições</div>
-            <div id="historico-pac-list"></div>
           </div>
           <div class="prescricao-split">
             <div>
@@ -2982,9 +2870,8 @@ textarea{resize:vertical;min-height:100px}
               </div>
             </div>
           </div>
-
-
         </div>
+
         <!-- TAB: RESULTADOS -->
         <div class="tab-pane" id="pane-resultados">
           <div style="display:flex;gap:0;height:calc(100vh - 200px);min-height:500px">
@@ -3057,7 +2944,9 @@ textarea{resize:vertical;min-height:100px}
         </div>
 
 <!-- TAB: HISTÓRICO -->
-    
+        <div class="tab-pane" id="pane-historico">
+          <div id="historico-pac-list"></div>
+        </div>
 
         <!-- TAB: NOTAS -->
         <div class="tab-pane" id="pane-notas">
@@ -3087,7 +2976,10 @@ textarea{resize:vertical;min-height:100px}
                   <div id="supl-data-label" style="font-size:12px;color:var(--gray-400);margin-top:2px"></div>
                 </div>
                 <div style="display:flex;gap:8px">
-
+                  <button class="btn btn-secondary" onclick="abrirHistoricoSupl()" style="font-size:12px;padding:6px 12px">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Histórico
+                  </button>
                   <button class="btn btn-secondary" onclick="abrirPrescreverSupl()" style="font-size:12px;padding:6px 12px">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                     Da Biblioteca
@@ -3096,10 +2988,27 @@ textarea{resize:vertical;min-height:100px}
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg>
                     Adicionar
                   </button>
-                  <button class="btn btn-secondary" onclick="gerarPDFProtocolo({data:new Date().toISOString().slice(0,10),lista:suplAtivo})" style="font-size:12px;padding:6px 12px">⬇ PDF</button>
+                  <button class="btn btn-success" onclick="guardarProtocoloSupl()" style="font-size:12px;padding:6px 12px">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                    Guardar
+                  </button>
                 </div>
               </div>
               <div id="supl-lista"></div>
+            </div>
+            <!-- Histórico lateral -->
+            <div id="supl-hist-panel" style="display:none;width:260px;flex-shrink:0">
+              <div class="card" style="position:sticky;top:0">
+                <div class="card-header" style="background:var(--gray-50);padding:10px 14px">
+                  <h2 style="font-size:12px">Histórico de Protocolos</h2>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <button onclick="exportarProtocoloSelecionado()" title="Exportar protocolo seleccionado" style="background:none;border:1px solid var(--gray-200);border-radius:5px;cursor:pointer;padding:3px 7px;font-size:11px;color:var(--blue)">⬇ PDF</button>
+                    <button onclick="fecharHistoricoSupl()" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:16px">×</button>
+                  </div>
+                </div>
+                <div id="supl-hist-lista" style="max-height:500px;overflow-y:auto"></div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -3181,13 +3090,13 @@ textarea{resize:vertical;min-height:100px}
     <div class="modal-body">
       <div class="form-group">
         <label>Data das análises</label>
-        <input type="date" id="nova-data-input" style="width:100%;font-size:16px;padding:14px;border:2px solid var(--gray-200);border-radius:8px;min-height:52px">
+        <input type="date" id="nova-data-input" style="width:100%;font-size:15px;padding:10px">
       </div>
-      <p style="font-size:12px;color:var(--blue);margin-top:8px">Depois de confirmar, aparece a tabela completa para preencheres os valores.</p>
-    </div>
-    <div class="modal-footer" style="display:flex;gap:8px;padding:16px;border-top:1px solid var(--gray-100);position:sticky;bottom:0;background:white">
-      <button class="btn btn-secondary" onclick="fecharModal('modal-nova-data')" style="flex:1;min-height:48px">Cancelar</button>
-      <button class="btn btn-primary" onclick="confirmarNovaData()" style="flex:2;min-height:48px;font-size:15px">✓ Abrir tabela</button>
+      <p style="font-size:12px;color:var(--gray-400);margin-top:8px">Depois de confirmar, aparece a tabela completa para preencheres os valores.</p>
+      <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="fecharModal('modal-nova-data')">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarNovaData()">Abrir tabela →</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3484,7 +3393,7 @@ function save(){
 }
 function css(s){return s.replace(/[^a-zA-Z0-9]/g,'_')}
 function esc(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
-function fmt2(v){const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?String(v):n.toFixed(2)}
+function fmt2(v){const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?String(v):parseFloat(n.toFixed(2)).toString()}
 function parseFloatSafe(v){const n=parseFloat(v);return isNaN(n)?null:n}
 function showToast(msg,d=2600){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d)}
 function fecharModal(id){document.getElementById(id).classList.remove('open')}
@@ -3520,11 +3429,6 @@ function showView(v){
 }
 
 function abrirPerfil(pacId){
-  // Auto-save supl of current patient before switching
-  if(pacienteAtivo && suplAtivo && suplAtivo.length){
-    autoSaveSupl();
-  }
-
   pacienteAtivo=pacientes.find(p=>p.id===pacId);
   if(!pacienteAtivo)return;
 
@@ -3589,7 +3493,7 @@ function switchTab(tab){
   // resumo tab removed
   if(tab==='prescricao')renderPrescricao();
   if(tab==='resultados')renderResultadosTab();
-
+  if(tab==='historico')renderHistoricoPac();
   if(tab==='notas')renderNotasTab();
   if(tab==='documentos')renderDocumentos();
   if(tab==='suplementos')renderSuplementosTab();
@@ -3647,7 +3551,7 @@ function renderResumo(){
   entries.forEach(([nome,v])=>{
     const ref=allRef.find(a=>a.nome===nome);
     if(!ref)return;
-    const n=parseFloat(parseFloat(String(v.valor).replace(',','.')).toFixed(2));
+    const n=parseFloat(String(v.valor).replace(',','.'));
     if(isNaN(n))return;
     const minV=sexo==='f'?ref.min_f:ref.min_m;
     const maxV=sexo==='f'?ref.max_f:ref.max_m;
@@ -3855,9 +3759,7 @@ function abrirModalNovoPaciente(id=null){
     document.getElementById('m-utente').value=p.utente||'';
     document.getElementById('m-seguro').value=p.seguro||'';document.getElementById('m-nasc').value=p.nasc||'';
     document.getElementById('m-sexo').value=p.sexo||'';document.getElementById('m-tel').value=p.tel||'';
-    const _nLocal = JSON.parse(localStorage.getItem('cs_notas')||'{}');
-    const _nPac = _nLocal[p.id] || [];
-    document.getElementById('m-notas').value = _nPac.length ? _nPac[_nPac.length-1].texto : '';
+    document.getElementById('m-notas').value=p.notas||'';
   }else{
     ['m-nome','m-nif','m-utente','m-seguro','m-nasc','m-tel','m-notas'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('m-sexo').value='';
@@ -3876,7 +3778,7 @@ function guardarPaciente(){
     tel:document.getElementById('m-tel').value.trim(),notas:document.getElementById('m-notas').value.trim()};
   if(editPacienteId){
     pacientes=pacientes.map(x=>x.id===editPacienteId?p:x);
-    supa('PATCH','pacientes',{nome:p.nome,nif:p.nif,utente:p.utente,seguro:p.seguro,nasc:p.nasc,sexo:p.sexo,tel:p.tel},`?id=eq.${editPacienteId}`).catch(e=>console.error(e));
+    supa('PATCH','pacientes',{nome:p.nome,nif:p.nif,utente:p.utente,seguro:p.seguro,nasc:p.nasc,sexo:p.sexo,tel:p.tel,notas:p.notas},`?id=eq.${editPacienteId}`).catch(e=>console.error(e));
     if(pacienteAtivo?.id===editPacienteId){pacienteAtivo=p;abrirPerfil(p.id);}
   }else{
     pacientes.push(p);
@@ -3921,24 +3823,10 @@ function guardarHistorico(){
   showToast('Prescrição guardada! ✓');
 }
 
-function toggleHistoricoPresc(){
-  const el = document.getElementById('prescricao-historico-section');
-  const btn = document.getElementById('btn-toggle-hist-presc');
-  if(!el) return;
-  const isOpen = el.style.display !== 'none';
-  el.style.display = isOpen ? 'none' : 'block';
-  if(btn) btn.textContent = isOpen ? '📋 Ver Histórico' : '📋 Ocultar Histórico';
-  if(!isOpen){
-    setTimeout(function(){ renderHistoricoPac(); }, 50);
-  }
-}
-
 function renderHistoricoPac(){
   if(!pacienteAtivo)return;
   const el=document.getElementById('historico-pac-list');
-  if(!el)return;
-  const pacId=String(pacienteAtivo.id);
-  const items=historico.filter(h=>String(h.pacienteId)===pacId);
+  const items=historico.filter(h=>h.pacienteId===pacienteAtivo.id);
   if(!items.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--gray-400);font-size:13px">Nenhuma prescrição guardada para este paciente.</div>';return;}
   el.innerHTML=items.map(h=>{
     const d=new Date(h.data);
@@ -4802,86 +4690,16 @@ function renderNotasTab(){
   } else if(textarea){
     textarea.value = '';
   }
-  // Render history with edit/delete buttons
+  // Render history
   const lista = document.getElementById('notas-historico-lista');
   if(!lista) return;
-  if(!notasPac.length){ lista.innerHTML = ''; return; }
-  lista.innerHTML = '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--gray-400);margin:16px 0 10px">Histórico de Notas</div>' +
-    notasPac.slice().reverse().map((n,i)=>{
-      const realIdx = notasPac.length - 1 - i;
-      const isLast = realIdx === notasPac.length - 1;
-      return `<div class="nota-entry" style="position:relative;padding-right:80px">
-        <div class="nota-entry-date" style="display:flex;align-items:center;justify-content:space-between">
-          <span>${new Date(n.data).toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'})} ${new Date(n.data).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}</span>
-          <div style="display:flex;gap:4px;flex-shrink:0">
-            <button onclick="editarNota(${realIdx})" title="Editar" style="background:none;border:1px solid var(--gray-200);border-radius:5px;cursor:pointer;padding:2px 7px;font-size:11px;color:var(--blue)">✏️</button>
-            <button onclick="apagarNota(${realIdx})" title="Apagar" style="background:none;border:1px solid #F5C6C3;border-radius:5px;cursor:pointer;padding:2px 7px;font-size:11px;color:#B02020">×</button>
-          </div>
-        </div>
-        <div class="nota-entry-text" id="nota-text-${realIdx}">${n.texto}</div>
-        <div id="nota-edit-${realIdx}" style="display:none;margin-top:8px">
-          <textarea style="width:100%;border:1px solid var(--gray-200);border-radius:6px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:80px">${n.texto}</textarea>
-          <div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end">
-            <button onclick="cancelarEditarNota(${realIdx})" class="btn btn-secondary" style="font-size:12px;padding:4px 10px">Cancelar</button>
-            <button onclick="guardarEditarNota(${realIdx})" class="btn btn-primary" style="font-size:12px;padding:4px 10px">Guardar</button>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-}
-
-function editarNota(idx){
-  const editEl = document.getElementById('nota-edit-'+idx);
-  const textEl = document.getElementById('nota-text-'+idx);
-  if(!editEl||!textEl) return;
-  textEl.style.display='none';
-  editEl.style.display='block';
-  editEl.querySelector('textarea').focus();
-}
-
-function cancelarEditarNota(idx){
-  const editEl = document.getElementById('nota-edit-'+idx);
-  const textEl = document.getElementById('nota-text-'+idx);
-  if(!editEl||!textEl) return;
-  editEl.style.display='none';
-  textEl.style.display='block';
-}
-
-function guardarEditarNota(idx){
-  if(!pacienteAtivo) return;
-  const pacId = pacienteAtivo.id;
-  const editEl = document.getElementById('nota-edit-'+idx);
-  if(!editEl) return;
-  const novoTexto = editEl.querySelector('textarea').value.trim();
-  if(!novoTexto){ showToast('A nota não pode estar vazia.'); return; }
-  const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
-  if(!todasNotas[pacId]) return;
-  todasNotas[pacId][idx].texto = novoTexto;
-  localStorage.setItem('cs_notas', JSON.stringify(todasNotas));
-  // Sync most recent to Supabase
-  const last = todasNotas[pacId][todasNotas[pacId].length-1];
-  supa('PATCH','pacientes',{notas_clinicas:last.texto},`?id=eq.${pacId}`).catch(e=>console.error(e));
-  renderNotasTab();
-  showToast('Nota actualizada! ✓');
-}
-
-function apagarNota(idx){
-  if(!pacienteAtivo) return;
-  if(!confirm('Apagar esta nota?')) return;
-  const pacId = pacienteAtivo.id;
-  const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
-  if(!todasNotas[pacId]) return;
-  todasNotas[pacId].splice(idx, 1);
-  localStorage.setItem('cs_notas', JSON.stringify(todasNotas));
-  // Sync most recent to Supabase
-  const remaining = todasNotas[pacId];
-  const syncText = remaining.length ? remaining[remaining.length-1].texto : '';
-  supa('PATCH','pacientes',{notas_clinicas:syncText},`?id=eq.${pacId}`).catch(e=>console.error(e));
-  // Update textarea if deleted the current note
-  const textarea = document.getElementById('notas-clinicas');
-  if(textarea) textarea.value = syncText;
-  renderNotasTab();
-  showToast('Nota apagada.');
+  if(notasPac.length <= 1){ lista.innerHTML = ''; return; }
+  lista.innerHTML = '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--gray-400);margin:16px 0 10px">Versões anteriores</div>' +
+    notasPac.slice(0,-1).reverse().map(n=>`
+      <div class="nota-entry">
+        <div class="nota-entry-date">${new Date(n.data).toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="nota-entry-text">${n.texto}</div>
+      </div>`).join('');
 }
 
 function guardarNotas(){
@@ -4895,11 +4713,10 @@ function guardarNotas(){
   // Keep last 20 versions
   if(todasNotas[pacId].length > 20) todasNotas[pacId] = todasNotas[pacId].slice(-20);
   localStorage.setItem('cs_notas', JSON.stringify(todasNotas));
-  // Sync to Supabase notas_clinicas column
-  supa('PATCH','pacientes',{notas_clinicas:texto},`?id=eq.${pacId}`)
-    .catch(e=>console.error('notas sync error:',e));
-  const pn = pacientes.find(x=>x.id===pacId);
-  if(pn) pn.notas_clinicas = texto;
+  // Sync to Supabase — store as paciente notas field
+  const notasStr = texto;
+  supa('PATCH','pacientes',{notas:notasStr},`?id=eq.${pacId}`)
+    .catch(e=>console.error('Supabase notas:',e));
   showToast('Notas guardadas! ✓');
   renderNotasTab();
 }
@@ -4916,50 +4733,30 @@ function getSuplPac(){
 function saveSuplLocal(data){
   localStorage.setItem('cs_supl', JSON.stringify(data));
 }
-function autoSaveSupl(){
-  if(!pacienteAtivo) return;
-  const pacId = pacienteAtivo.id;
-  const lista = JSON.parse(JSON.stringify(suplAtivo));
-  // Save to localStorage (flat array)
-  const todos = getSuplPac();
-  todos[pacId] = lista;
-  saveSuplLocal(todos);
-  // Sync to Supabase
-  supa('PATCH','pacientes',{supl:JSON.stringify(lista)},`?id=eq.${pacId}`)
-    .then(()=>{
-      const lbl = document.getElementById('supl-data-label');
-      if(lbl) lbl.textContent = lista.length + ' suplementos · ✓ ' + new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-    })
-    .catch(e=>{ console.error('autoSaveSupl error:',e); showToast('Erro ao guardar suplementos.'); });
-  // Update in-memory paciente
-  const p = pacientes.find(x=>x.id===pacId);
-  if(p) p.supl = JSON.stringify(lista);
-}
 
 function renderSuplementosTab(){
   if(!pacienteAtivo) return;
   const pacId = pacienteAtivo.id;
   let todos = getSuplPac();
-
-  // 1. Try localStorage
-  let lista = todos[pacId];
-
-  // 2. Fallback: load from pacienteAtivo.supl (Supabase field)
-  if(!lista && pacienteAtivo.supl){
-    try{ lista = JSON.parse(pacienteAtivo.supl); }catch(e){}
+  // Fallback: read from pacienteAtivo.notas if not in localStorage
+  if(!todos[pacId] && pacienteAtivo.notas && pacienteAtivo.notas.startsWith('{')){
+    try{
+      const parsed = JSON.parse(pacienteAtivo.notas);
+      if(parsed.supl && parsed.supl.length){
+        todos[pacId] = parsed.supl;
+        saveSuplLocal(todos);
+      }
+    }catch(e){}
   }
-
-  // 3. Old format compat: array of {data, lista} protocols — take last
-  if(Array.isArray(lista) && lista.length && lista[0] && lista[0].lista){
-    lista = lista[lista.length-1].lista || [];
-    // Migrate to new flat format
-    todos[pacId] = lista;
-    saveSuplLocal(todos);
+  const histPac = todos[pacId] || [];
+  if(histPac.length){
+    const last = histPac[histPac.length-1];
+    suplAtivo = JSON.parse(JSON.stringify(last.lista||[]));
+    document.getElementById('supl-data-label').textContent = 'Protocolo de ' + last.data;
+  } else {
+    suplAtivo = [];
+    document.getElementById('supl-data-label').textContent = 'Nenhum protocolo guardado ainda';
   }
-
-  suplAtivo = JSON.parse(JSON.stringify(lista || []));
-  const lbl = document.getElementById('supl-data-label');
-  if(lbl) lbl.textContent = suplAtivo.length ? suplAtivo.length + ' suplementos' : 'Sem suplementos';
   renderSuplLista();
 }
 
@@ -5036,7 +4833,6 @@ function guardarSuplemento(){
   else suplAtivo.push(s);
   fecharModal('modal-supl');
   renderSuplLista();
-  autoSaveSupl();
 }
 
 function apagarSuplemento(){
@@ -5045,7 +4841,6 @@ function apagarSuplemento(){
   suplAtivo.splice(suplEditIdx,1);
   fecharModal('modal-supl');
   renderSuplLista();
-  autoSaveSupl();
 }
 
 function guardarProtocoloSupl(){
@@ -5601,566 +5396,6 @@ function gerarPDFProtocolo(proto){
   showToast('PDF pronto — usa "Guardar como PDF" no diálogo de impressão');
 }
 
-
-function gerarRelatorioIA(){
-  if(!pacienteAtivo){ showToast('Nenhum paciente activo.'); return; }
-  const pac = pacienteAtivo;
-  const hoje = new Date().toLocaleDateString('pt-PT');
-  const allRef = getRefFinal();
-  const hist = (resultados[pac.id] || []).slice().sort(function(a,b){return a.data.localeCompare(b.data);});
-  // Load supl from localStorage to ensure it's available even if tab wasn't visited
-  let supl = suplAtivo || [];
-  if(!supl.length && pacienteAtivo){
-    const _todosSupl = JSON.parse(localStorage.getItem('cs_supl')||'{}');
-    const _suplPac = _todosSupl[pacienteAtivo.id];
-    if(_suplPac){
-      // Handle both flat array and old protocol format
-      if(Array.isArray(_suplPac) && _suplPac.length && _suplPac[0].lista){
-        supl = _suplPac[_suplPac.length-1].lista || [];
-      } else {
-        supl = _suplPac;
-      }
-    }
-    // Fallback to paciente.supl from Supabase
-    if(!supl.length && pacienteAtivo.supl){
-      try{ supl = JSON.parse(pacienteAtivo.supl); }catch(e){}
-    }
-  }
-  let idadeStr = 'N/D';
-  if(pac.nasc){
-    const nasc = new Date(pac.nasc+'T12:00:00');
-    const h2 = new Date();
-    let age = h2.getFullYear()-nasc.getFullYear();
-    if(h2 < new Date(h2.getFullYear()+'-'+pac.nasc.slice(5,10)+'T12:00:00')) age--;
-    idadeStr = age + ' anos';
-  }
-  let txt = '# RELATORIO CLINICO\n';
-  txt += 'Data: ' + hoje + '\n\n';
-  txt += '## DADOS DO PACIENTE\n';
-  txt += 'Nome: ' + pac.nome + '\n';
-  txt += 'Sexo: ' + (pac.sexo==='f'?'Feminino':'Masculino') + '\n';
-  txt += 'Idade: ' + idadeStr + '\n';
-  if(pac.nasc) txt += 'Nascimento: ' + new Date(pac.nasc+'T12:00:00').toLocaleDateString('pt-PT') + '\n';
-  if(pac.nif) txt += 'NIF: ' + pac.nif + '\n';
-  if(pac.utente) txt += 'N Utente SNS: ' + pac.utente + '\n';
-  if(pac.seguro) txt += 'Seguro: ' + pac.seguro + '\n';
-  txt += '\n';
-  const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
-  const notasPac = todasNotas[pac.id] || [];
-  if(notasPac.length){
-    txt += 'Notas: ' + notasPac[notasPac.length-1].texto + '\n';
-  }
-  txt += '\n';
-  if(supl.length){
-    txt += '## SUPLEMENTACAO\n';
-    const ativos = supl.filter(function(s){return s.estado==='ativo'||!s.estado;});
-    const pausados = supl.filter(function(s){return s.estado==='pausado';});
-    const desc = supl.filter(function(s){return s.estado==='descontinuado';});
-    if(ativos.length){ txt += 'Ativos:\n'; ativos.forEach(function(s){ txt += '- ' + s.nome + ': ' + (s.dose||'') + ' ' + (s.unidade||'') + ' ' + (s.freq||'') + (s.notas?' ('+s.notas+')':'') + '\n'; }); }
-    if(pausados.length){ txt += 'Pausados:\n'; pausados.forEach(function(s){ txt += '- ' + s.nome + '\n'; }); }
-    if(desc.length){ txt += 'Descontinuados:\n'; desc.forEach(function(s){ txt += '- ' + s.nome + '\n'; }); }
-    txt += '\n';
-  }
-  if(hist.length){
-    txt += '## RESULTADOS\n';
-    const sexo = pac.sexo || 'f';
-    const perfisVis = {};
-    allRef.forEach(function(a){
-      if(!hist.some(function(h){return h.valores&&h.valores[a.nome]!==undefined;})) return;
-      const perf = a.perfil.split('(')[0].trim();
-      if(!perfisVis[perf]) perfisVis[perf] = [];
-      perfisVis[perf].push(a);
-    });
-    Object.entries(perfisVis).forEach(function(entry){
-      const perfil = entry[0]; const lista = entry[1];
-      txt += '\n### ' + perfil + '\n';
-      lista.forEach(function(a){
-        const minV = sexo==='f'?a.min_f:a.min_m;
-        const maxV = sexo==='f'?a.max_f:a.max_m;
-        const ref = sexo==='f'?(a.ref_f||''):(a.ref_m||'');
-        const unit = a.unidade||'';
-        const vals = hist.map(function(h){
-          const v = h.valores&&h.valores[a.nome];
-          if(!v||v.valor===''||v.valor===undefined) return null;
-          const n = parseFloat(String(v.valor).replace(',','.'));
-          return isNaN(n)?null:{data:h.data,val:parseFloat(n.toFixed(2))};
-        }).filter(Boolean);
-        if(!vals.length) return;
-        const last = vals[vals.length-1];
-        let status = '';
-        if(minV!=null&&last.val<minV) status = ' BAIXO';
-        else if(maxV!=null&&last.val>maxV) status = ' ALTO';
-        else if(minV!=null||maxV!=null) status = ' IDEAL';
-        let trend = '';
-        if(vals.length>=2){
-          const prev = vals[vals.length-2].val||1;
-          const diff = last.val - prev;
-          if(Math.abs(diff/prev)>0.05) trend = (diff>0?' (a subir)':' (a descer)');
-        }
-        txt += '- ' + a.nome + ': ' + last.val + ' ' + unit + status + trend;
-        if(ref) txt += ' [Ref: ' + ref + ']';
-        if(vals.length>1) txt += '\n  Historico: ' + vals.map(function(v){return v.data+': '+v.val;}).join(' | ');
-        txt += '\n';
-      });
-    });
-  }
-  txt += '\n---\nRelatorio gerado pelo ClinicaScript\n';
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(txt).then(function(){
-      showToast('Relatorio copiado! Cola no ChatGPT ou Claude.', 4000);
-    }).catch(function(){
-      const win = window.open('','_blank','width=800,height=600');
-      win.document.write('<pre style="padding:20px;white-space:pre-wrap;font-size:13px">'+txt+'</pre>');
-      win.document.close();
-    });
-  } else {
-    const win = window.open('','_blank','width=800,height=600');
-    win.document.write('<pre style="padding:20px;white-space:pre-wrap;font-size:13px">'+txt+'</pre>');
-    win.document.close();
-  }
-}
-
-
-function buildRelatorioData(){
-  if(!pacienteAtivo) return null;
-  const pac = pacienteAtivo;
-  const allRef = getRefFinal();
-  const hist = (resultados[pac.id] || []).slice().sort(function(a,b){return a.data.localeCompare(b.data);});
-  // Load supl from localStorage to ensure it's available even if tab wasn't visited
-  let supl = suplAtivo || [];
-  if(!supl.length && pacienteAtivo){
-    const _todosSupl = JSON.parse(localStorage.getItem('cs_supl')||'{}');
-    const _suplPac = _todosSupl[pacienteAtivo.id];
-    if(_suplPac){
-      // Handle both flat array and old protocol format
-      if(Array.isArray(_suplPac) && _suplPac.length && _suplPac[0].lista){
-        supl = _suplPac[_suplPac.length-1].lista || [];
-      } else {
-        supl = _suplPac;
-      }
-    }
-    // Fallback to paciente.supl from Supabase
-    if(!supl.length && pacienteAtivo.supl){
-      try{ supl = JSON.parse(pacienteAtivo.supl); }catch(e){}
-    }
-  }
-  let idade = null;
-  if(pac.nasc){
-    const nasc = new Date(pac.nasc+'T12:00:00');
-    const h2 = new Date();
-    let age = h2.getFullYear()-nasc.getFullYear();
-    if(h2 < new Date(h2.getFullYear()+'-'+pac.nasc.slice(5,10)+'T12:00:00')) age--;
-    idade = age;
-  }
-  const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
-  // Get most recent note only (guardarNotas saves a new entry each time)
-  const _todasNotasArr = todasNotas[pac.id] || [];
-  const notasPac = _todasNotasArr.length ? [_todasNotasArr[_todasNotasArr.length-1]] : [];
-  // Build results grouped by profile
-  const sexo = pac.sexo || 'f';
-  const perfisVis = {};
-  allRef.forEach(function(a){
-    if(!hist.some(function(h){return h.valores&&h.valores[a.nome]!==undefined;})) return;
-    const perf = a.perfil.split('(')[0].trim();
-    if(!perfisVis[perf]) perfisVis[perf] = [];
-    perfisVis[perf].push(a);
-  });
-  const resultadosGrupos = [];
-  Object.entries(perfisVis).forEach(function(entry){
-    const perfil = entry[0]; const lista = entry[1];
-    const rows = [];
-    lista.forEach(function(a){
-      const minV = sexo==='f'?a.min_f:a.min_m;
-      const maxV = sexo==='f'?a.max_f:a.max_m;
-      const ref = sexo==='f'?(a.ref_f||''):(a.ref_m||'');
-      const unit = a.unidade||'';
-      const vals = hist.map(function(h){
-        const v = h.valores&&h.valores[a.nome];
-        if(!v||v.valor===''||v.valor===undefined) return null;
-        const n = parseFloat(String(v.valor).replace(',','.'));
-        return isNaN(n)?null:{data:h.data,val:parseFloat(n.toFixed(2)),unit:v.unidade||unit};
-      }).filter(Boolean);
-      if(!vals.length) return;
-      const last = vals[vals.length-1];
-      let status = 'normal';
-      if(minV!=null&&last.val<minV) status = 'baixo';
-      else if(maxV!=null&&last.val>maxV) status = 'alto';
-      rows.push({nome:a.nome,vals:vals,last:last,ref:ref,unit:unit,status:status,minV:minV,maxV:maxV});
-    });
-    if(rows.length) resultadosGrupos.push({perfil:perfil,rows:rows});
-  });
-  return {pac:pac,idade:idade,supl:supl,notasPac:notasPac,hist:hist,resultadosGrupos:resultadosGrupos,sexo:sexo};
-}
-
-async function gerarRelatorioWord(){
-  if(!pacienteAtivo){showToast('Nenhum paciente activo.');return;}
-  const d = buildRelatorioData();
-  if(!d){return;}
-  showToast('A gerar Word...', 5000);
-  const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,
-    AlignmentType,BorderStyle,WidthType,ShadingType,Header} = docx;
-  const AZ='1A3A5C', BL='2E6DA4', GR='1E6B3A', RD='B02020', AM='856404';
-  const WHITE='FFFFFF', LGRAY='F5F8FC', GRAY='666666';
-  const bN={top:{style:BorderStyle.NONE,size:0,color:WHITE},bottom:{style:BorderStyle.NONE,size:0,color:WHITE},left:{style:BorderStyle.NONE,size:0,color:WHITE},right:{style:BorderStyle.NONE,size:0,color:WHITE}};
-  const hoje = new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
-  const children = [];
-
-  function hdr(txt, color, size){
-    return new Paragraph({spacing:{before:200,after:80},children:[new TextRun({text:txt,font:'Arial',size:size||26,bold:true,color:color||AZ})]});
-  }
-  function linha(){
-    return new Paragraph({border:{bottom:{style:BorderStyle.SINGLE,size:6,color:'CCCCCC',space:1}},spacing:{before:0,after:120},children:[]});
-  }
-  function par(txt, opts){
-    opts = opts||{};
-    return new Paragraph({spacing:{before:opts.before||0,after:opts.after||40},children:[new TextRun({text:txt,font:'Arial',size:opts.size||22,color:opts.color||'333333',bold:opts.bold||false,italics:opts.italics||false})]});
-  }
-
-  // ── HEADER ──
-  children.push(
-    new Paragraph({shading:{fill:AZ,type:ShadingType.CLEAR},spacing:{before:0,after:0},children:[new TextRun({text:'  RELATÓRIO CLÍNICO',font:'Arial',size:32,bold:true,color:WHITE})]}),
-    new Paragraph({shading:{fill:AZ,type:ShadingType.CLEAR},spacing:{before:0,after:160},children:[new TextRun({text:'  Documento confidencial · '+hoje,font:'Arial',size:18,color:'AACCEE'})]}),
-  );
-
-  // ── DADOS DO PACIENTE ──
-  children.push(hdr('DADOS DO PACIENTE', AZ, 24), linha());
-  const dadosRows = [
-    ['Nome', d.pac.nome],
-    ['Sexo', d.pac.sexo==='f'?'Feminino':'Masculino'],
-    ['Idade', d.idade!=null ? d.idade+' anos' : 'N/D'],
-    ['Data de Nascimento', d.pac.nasc ? new Date(d.pac.nasc+'T12:00:00').toLocaleDateString('pt-PT') : '—'],
-  ];
-  if(d.pac.nif) dadosRows.push(['NIF', d.pac.nif]);
-  if(d.pac.utente) dadosRows.push(['Nº Utente SNS', d.pac.utente]);
-  if(d.pac.seguro) dadosRows.push(['Seguro de Saúde', d.pac.seguro]);
-  if(d.pac.tel) dadosRows.push(['Contacto', d.pac.tel]);
-
-  children.push(new Table({
-    width:{size:9200,type:WidthType.DXA},
-    columnWidths:[2800,6400],
-    borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
-    rows: dadosRows.map(function(r,i){
-      return new TableRow({children:[
-        new TableCell({borders:bN,shading:{fill:i%2?'F0F4F8':LGRAY,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:120,right:80},width:{size:2800,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:r[0],font:'Arial',size:20,bold:true,color:AZ})],spacing:{before:20,after:20}})]}),
-        new TableCell({borders:bN,shading:{fill:i%2?'F0F4F8':LGRAY,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},width:{size:6400,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:r[1],font:'Arial',size:20,color:'222222'})],spacing:{before:20,after:20}})]})
-      ]});
-    })
-  }));
-
-  // ── NOTAS — como linha da tabela de dados ──
-  if(d.notasPac.length){
-    const ultimaNota = d.notasPac[d.notasPac.length-1];
-    // Add a separator line before notas
-    children.push(new Paragraph({spacing:{before:60,after:0},children:[]}));
-    children.push(new Table({
-      width:{size:9200,type:WidthType.DXA},
-      columnWidths:[2800,6400],
-      borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
-      rows:[new TableRow({children:[
-        new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:80,bottom:80,left:120,right:80},width:{size:2800,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:'Notas Clínicas',font:'Arial',size:20,bold:true,color:AZ})],spacing:{before:20,after:20}})]}),
-        new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:80,bottom:80,left:80,right:80},width:{size:6400,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:ultimaNota.texto,font:'Arial',size:20,color:'333333',italics:true})],spacing:{before:20,after:20}})]})
-      ]})]
-    }));
-  }
-
-  // ── SUPLEMENTAÇÃO ──
-  if(d.supl.length){
-    children.push(new Paragraph({spacing:{before:200,after:0},children:[]}));
-    children.push(hdr('SUPLEMENTAÇÃO ACTUAL', AZ, 24), linha());
-    const ativos = d.supl.filter(function(s){return s.estado==='ativo'||!s.estado;});
-    const pausados = d.supl.filter(function(s){return s.estado==='pausado';});
-    const desc = d.supl.filter(function(s){return s.estado==='descontinuado';});
-
-    function suplTable(lista, bgColor){
-      if(!lista.length) return [];
-      return [new Table({
-        width:{size:9200,type:WidthType.DXA},
-        columnWidths:[3200,1600,1600,2800],
-        borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
-        rows:[
-          new TableRow({children:[
-            new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:120,right:80},width:{size:3200,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:'Suplemento',font:'Arial',size:18,bold:true,color:GRAY})],spacing:{before:10,after:10}})]}),
-            new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:80,right:80},width:{size:1600,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'Dose',font:'Arial',size:18,bold:true,color:GRAY})],spacing:{before:10,after:10}})]}),
-            new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:80,right:80},width:{size:1600,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'Frequência',font:'Arial',size:18,bold:true,color:GRAY})],spacing:{before:10,after:10}})]}),
-            new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:80,right:80},width:{size:2800,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:'Notas',font:'Arial',size:18,bold:true,color:GRAY})],spacing:{before:10,after:10}})]})
-          ]}),
-          ...lista.map(function(s,i){
-            return new TableRow({children:[
-              new TableCell({borders:bN,shading:{fill:i%2?WHITE:bgColor,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:120,right:80},width:{size:3200,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:s.nome,font:'Arial',size:20,bold:true,color:'222222'})],spacing:{before:20,after:20}})]}),
-              new TableCell({borders:bN,shading:{fill:i%2?WHITE:bgColor,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},width:{size:1600,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:(s.dose||'')+(s.unidade?' '+s.unidade:''),font:'Arial',size:20,bold:true,color:BL})],spacing:{before:20,after:20}})]}),
-              new TableCell({borders:bN,shading:{fill:i%2?WHITE:bgColor,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},width:{size:1600,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:s.freq||'',font:'Arial',size:18,color:'555555'})],spacing:{before:20,after:20}})]}),
-              new TableCell({borders:bN,shading:{fill:i%2?WHITE:bgColor,type:ShadingType.CLEAR},margins:{top:60,bottom:60,left:80,right:80},width:{size:2800,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:s.notas||'',font:'Arial',size:16,italics:true,color:'777777'})],spacing:{before:20,after:20}})]})
-            ]});
-          })
-        ]
-      }), new Paragraph({spacing:{before:60,after:0},children:[]})];
-    }
-
-    if(ativos.length){ children.push(par('Ativos ('+ativos.length+')',{bold:true,color:GR,size:20,before:80,after:40})); suplTable(ativos,'F0FAF4').forEach(function(r){children.push(r);}); }
-    if(pausados.length){ children.push(par('Pausados ('+pausados.length+')',{bold:true,color:AM,size:20,before:80,after:40})); suplTable(pausados,'FFFDF0').forEach(function(r){children.push(r);}); }
-    if(desc.length){ children.push(par('Descontinuados ('+desc.length+')',{bold:true,color:RD,size:20,before:80,after:40})); suplTable(desc,'FFF8F8').forEach(function(r){children.push(r);}); }
-  }
-
-  // ── RESULTADOS ──
-  if(d.resultadosGrupos.length){
-    children.push(new Paragraph({spacing:{before:200,after:0},children:[]}));
-    children.push(hdr('RESULTADOS DE ANÁLISES', AZ, 24), linha());
-    const datas = d.hist.map(function(h){return h.data;});
-
-    d.resultadosGrupos.forEach(function(grupo){
-      children.push(par(grupo.perfil,{bold:true,color:AZ,size:22,before:120,after:40}));
-      const colW = Math.max(1200, Math.floor(7200/(datas.length+2)));
-      const nomeW = 2800;
-      const refW = 1400;
-      const valW = Math.floor((9200-nomeW-refW)/Math.max(1,datas.length));
-      const allWidths = [nomeW, refW, ...datas.map(function(){return valW;})];
-
-      const rows = [
-        new TableRow({children:[
-          new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:120,right:60},width:{size:nomeW,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:'Análise',font:'Arial',size:17,bold:true,color:GRAY})],spacing:{before:10,after:10}})]}),
-          new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:60,right:60},width:{size:refW,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:'Ref.',font:'Arial',size:17,bold:true,color:GRAY})],spacing:{before:10,after:10}})]}),
-          ...datas.map(function(dt){
-            return new TableCell({borders:bN,shading:{fill:'E8EEF5',type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:60,right:60},width:{size:valW,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:dt,font:'Arial',size:17,bold:true,color:GRAY})],spacing:{before:10,after:10}})]});
-          })
-        ]})
-      ];
-
-      grupo.rows.forEach(function(row,i){
-        const bg = i%2?WHITE:LGRAY;
-        const cells = [
-          new TableCell({borders:bN,shading:{fill:bg,type:ShadingType.CLEAR},margins:{top:50,bottom:50,left:120,right:60},width:{size:nomeW,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:row.nome,font:'Arial',size:18,bold:true,color:'222222'})],spacing:{before:15,after:15}})]}),
-          new TableCell({borders:bN,shading:{fill:bg,type:ShadingType.CLEAR},margins:{top:50,bottom:50,left:60,right:60},width:{size:refW,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:row.ref+(row.unit?' '+row.unit:''),font:'Arial',size:16,color:'888888'})],spacing:{before:15,after:15}})]})
-        ];
-        datas.forEach(function(dt){
-          const entry = row.vals.find(function(v){return v.data===dt;});
-          let cellTxt = '—'; let cellColor = '999999'; let cellBold = false; let cellBg = bg;
-          if(entry){
-            cellTxt = String(entry.val)+(entry.unit?' '+entry.unit:'');
-            if(row.status==='baixo'){cellColor=AM;cellBold=true;cellBg=i%2?'FFFEF5':'FFFDE8';}
-            else if(row.status==='alto'){cellColor=RD;cellBold=true;cellBg=i%2?'FFF8F8':'FFF0F0';}
-            else{cellColor=GR;cellBg=bg;}
-          }
-          cells.push(new TableCell({borders:bN,shading:{fill:cellBg,type:ShadingType.CLEAR},margins:{top:50,bottom:50,left:60,right:60},width:{size:valW,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:cellTxt,font:'Arial',size:19,bold:cellBold,color:cellColor})],spacing:{before:15,after:15}})]}));
-        });
-        rows.push(new TableRow({children:cells}));
-      });
-
-      children.push(new Table({width:{size:9200,type:WidthType.DXA},columnWidths:allWidths,
-        borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
-        rows:rows}));
-      children.push(new Paragraph({spacing:{before:80,after:0},children:[]}));
-    });
-  }
-
-  // ── FOOTER ──
-  children.push(new Paragraph({spacing:{before:200,after:0},border:{top:{style:BorderStyle.SINGLE,size:4,color:'CCCCCC',space:1}},children:[]}));
-  children.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:60,after:0},children:[new TextRun({text:'Documento gerado pelo ClinicaScript · '+hoje+' · Confidencial',font:'Arial',size:16,italics:true,color:'999999'})]}));
-
-  const docObj = new Document({sections:[{
-    properties:{page:{size:{width:11906,height:16838},margin:{top:900,right:800,bottom:1200,left:800}}},
-    children:children
-  }]});
-
-  try{
-    const buf = await Packer.toBuffer(docObj);
-    const blob = new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
-    saveAs(blob,'Relatorio_'+d.pac.nome.replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.docx');
-    showToast('Word gerado! ✓');
-  }catch(e){console.error(e);showToast('Erro ao gerar Word.');}
-}
-
-
-function gerarRelatorioPDFMobile(d){
-  if(typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined'){
-    showToast('A carregar ferramentas de PDF, tenta novamente em alguns segundos...', 3000);
-    return;
-  }
-  showToast('A gerar PDF...', 8000);
-  const hoje = new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
-
-  // Build HTML content (same as desktop but without print dialog)
-  let suplHTML = '';
-  if(d.supl && d.supl.length){
-    const ativos = d.supl.filter(function(s){return s.estado==='ativo'||!s.estado;});
-    const pausados = d.supl.filter(function(s){return s.estado==='pausado';});
-    const desc = d.supl.filter(function(s){return s.estado==='descontinuado';});
-    function suplSec(lista,label,bg,color){
-      if(!lista.length) return '';
-      return '<div style="margin-bottom:10px"><div style="background:'+bg+';color:'+color+';padding:4px 10px;font-size:10px;font-weight:700;margin-bottom:4px">'+label+' ('+lista.length+')</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr style="background:#f5f5f5"><th style="padding:4px 6px;text-align:left">Suplemento</th><th style="padding:4px 6px;text-align:center">Dose</th><th style="padding:4px 6px;text-align:center">Freq.</th><th style="padding:4px 6px;text-align:left">Notas</th></tr></thead><tbody>'+lista.map(function(s,i){return '<tr style="background:'+(i%2?'white':'#fafafa')+'"><td style="padding:4px 6px;font-weight:600">'+s.nome+'</td><td style="padding:4px 6px;text-align:center;color:#2E6DA4;font-weight:600">'+(s.dose||'')+' '+(s.unidade||'')+'</td><td style="padding:4px 6px;text-align:center">'+(s.freq||'')+'</td><td style="padding:4px 6px;color:#888;font-style:italic">'+(s.notas||'')+'</td></tr>';}).join('')+'</tbody></table></div>';
-    }
-    suplHTML = suplSec(ativos,'ATIVOS','#E8F5EE','#1E6B3A')+suplSec(pausados,'PAUSADOS','#FFF3CD','#856404')+suplSec(desc,'DESCONTINUADOS','#FDECEA','#B02020');
-  }
-
-  let resHTML = '';
-  if(d.resultadosGrupos && d.resultadosGrupos.length){
-    const datas = d.hist.map(function(h){return h.data;});
-    const nCols = datas.length;
-    const nomeColW = 22; const refColW = 14; const valColW = nCols ? ((100 - nomeColW - refColW) / nCols) : 0;
-    resHTML = d.resultadosGrupos.map(function(grupo){
-      return '<div style="margin-bottom:14px;page-break-inside:avoid"><div style="background:#2E6DA4;color:white;padding:5px 8px;font-size:9px;font-weight:700;letter-spacing:0.3px">'+grupo.perfil+'</div>'
-        +'<table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px">'
-        +'<colgroup><col style="width:'+nomeColW+'%"><col style="width:'+refColW+'%">'+datas.map(function(){return '<col style="width:'+valColW+'%">';}).join('')+'</colgroup>'
-        +'<thead><tr style="background:#f0f4f8;border-bottom:1px solid #d8e0e8">'
-        +'<th style="padding:4px 6px;text-align:left;overflow:hidden">Análise</th>'
-        +'<th style="padding:4px 6px;text-align:left;color:#888;overflow:hidden">Ref.</th>'
-        +datas.map(function(dt){return '<th style="padding:4px 4px;text-align:center;overflow:hidden;font-size:8px">'+dt+'</th>';}).join('')
-        +'</tr></thead><tbody>'
-        +grupo.rows.map(function(row,i){
-          return '<tr style="background:'+(i%2?'white':'#f9f9f9')+';border-bottom:1px solid #f0f0f0">'
-            +'<td style="padding:4px 6px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+row.nome+'</td>'
-            +'<td style="padding:4px 6px;font-size:8px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+row.ref+'</td>'
-            +datas.map(function(dt){
-              const entry = row.vals.find(function(v){return v.data===dt;});
-              if(!entry) return '<td style="padding:4px 4px;text-align:center;color:#ccc">—</td>';
-              let color='#1E6B3A'; let bg='#E8F5EE';
-              if(row.status==='baixo'){color='#856404';bg='#FFF3CD';}
-              else if(row.status==='alto'){color='#B02020';bg='#FDECEA';}
-              return '<td style="padding:4px 4px;text-align:center;background:'+bg+';color:'+color+';font-weight:700">'+entry.val+'</td>';
-            }).join('')
-            +'</tr>';
-        }).join('')
-        +'</tbody></table></div>';
-    }).join('');
-  }
-
-  const notasHTML = d.notasPac && d.notasPac.length ?
-    '<section><h2 style="font-size:13px;font-weight:700;color:#1A3A5C;margin:14px 0 6px;padding-bottom:4px;border-bottom:2px solid #2E6DA4">Notas Clínicas</h2><div style="background:#F0F4F8;border-left:4px solid #2E6DA4;padding:10px 12px;font-size:11px;line-height:1.6;white-space:pre-wrap">'+d.notasPac[d.notasPac.length-1].texto+'</div></section>' : '';
-
-  const fullHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:16px;color:#1e2d3d;font-size:11px}h2{font-size:13px;font-weight:700;color:#1A3A5C;margin:14px 0 6px;padding-bottom:4px;border-bottom:2px solid #2E6DA4}.header{background:#1A3A5C;color:white;padding:12px 16px;border-radius:6px;margin-bottom:14px}.header h1{font-size:16px;font-weight:700;margin-bottom:4px}.meta{font-size:10px;opacity:0.85}table{border-collapse:collapse;width:100%}section{margin-bottom:14px}.dados-table td{padding:5px 8px;font-size:11px;border-bottom:1px solid #eee}.dados-table td:first-child{font-weight:700;color:#1A3A5C;width:140px;background:#f5f8fc}</style></head><body>'
-    +'<div class="header"><h1>RELATÓRIO CLÍNICO</h1><div class="meta">'+d.pac.nome+' · '+(d.pac.sexo==='f'?'Feminino':'Masculino')+(d.idade!=null?' · '+d.idade+' anos':'')+'<br>'+hoje+'</div></div>'
-    +'<section><h2>Dados do Paciente</h2><table class="dados-table"><tbody>'
-    +'<tr><td>Nome</td><td>'+d.pac.nome+'</td></tr>'
-    +'<tr><td>Sexo</td><td>'+(d.pac.sexo==='f'?'Feminino':'Masculino')+'</td></tr>'
-    +(d.idade!=null?'<tr><td>Idade</td><td>'+d.idade+' anos</td></tr>':'')
-    +(d.pac.nasc?'<tr><td>Nascimento</td><td>'+new Date(d.pac.nasc+'T12:00:00').toLocaleDateString('pt-PT')+'</td></tr>':'')
-    +(d.pac.nif?'<tr><td>NIF</td><td>'+d.pac.nif+'</td></tr>':'')
-    +(d.pac.utente?'<tr><td>Nº Utente SNS</td><td>'+d.pac.utente+'</td></tr>':'')
-    +(d.pac.seguro?'<tr><td>Seguro</td><td>'+d.pac.seguro+'</td></tr>':'')
-    +'</tbody></table></section>'
-    +notasHTML
-    +(d.supl&&d.supl.length?'<section><h2>Suplementação Actual</h2>'+suplHTML+'</section>':'')
-    +(d.resultadosGrupos&&d.resultadosGrupos.length?'<section><h2>Resultados de Análises</h2>'+resHTML+'</section>':'')
-    +'<div style="margin-top:14px;padding-top:8px;border-top:1px solid #eee;font-size:9px;color:#aaa;text-align:center">ClinicaScript · '+hoje+' · Confidencial</div>'
-    +'</body></html>';
-
-  // Create hidden iframe, render HTML, then use jsPDF + html2canvas
-  const container = document.createElement('div');
-  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:white;z-index:-1';
-  container.innerHTML = fullHTML;
-  document.body.appendChild(container);
-
-  setTimeout(function(){
-    html2canvas(container, {scale:1.5, useCORS:true, logging:false, width:800}).then(function(canvas){
-      const imgData = canvas.toDataURL('image/jpeg', 0.85);
-      const {jsPDF} = window.jspdf;
-      const pdf = new jsPDF('p','mm','a4');
-      const pdfW = pdf.internal.pageSize.getWidth();
-      const pdfH = pdf.internal.pageSize.getHeight();
-      const imgW = pdfW;
-      const imgH = canvas.height * pdfW / canvas.width;
-      let heightLeft = imgH;
-      let position = 0;
-      pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
-      heightLeft -= pdfH;
-      while(heightLeft > 0){
-        position = heightLeft - imgH;
-        pdf.addPage();
-        pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
-        heightLeft -= pdfH;
-      }
-      pdf.save('Relatorio_'+d.pac.nome.replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.pdf');
-      document.body.removeChild(container);
-      showToast('PDF guardado! ✓');
-    }).catch(function(e){
-      console.error(e);
-      document.body.removeChild(container);
-      showToast('Erro ao gerar PDF.');
-    });
-  }, 300);
-}
-
-function gerarRelatorioPDF(){
-  if(!pacienteAtivo){showToast('Nenhum paciente activo.');return;}
-  const d = buildRelatorioData();
-  if(!d) return;
-  // On mobile, use jsPDF directly (window.print() doesn't work on iOS)
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if(isMobile){ gerarRelatorioPDFMobile(d); return; }
-  const hoje = new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
-
-  let suplHTML = '';
-  if(d.supl.length){
-    const ativos = d.supl.filter(function(s){return s.estado==='ativo'||!s.estado;});
-    const pausados = d.supl.filter(function(s){return s.estado==='pausado';});
-    const desc = d.supl.filter(function(s){return s.estado==='descontinuado';});
-    function suplSec(lista,label,bg,color){
-      if(!lista.length) return '';
-      return '<div style="margin-bottom:14px"><div style="background:'+bg+';color:'+color+';padding:5px 12px;border-radius:5px;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:6px">'+label+' ('+lista.length+')</div><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#f5f5f5"><th style="padding:5px 8px;text-align:left">Suplemento</th><th style="padding:5px 8px;text-align:center;width:90px">Dose</th><th style="padding:5px 8px;text-align:center;width:90px">Frequência</th><th style="padding:5px 8px;text-align:left">Notas</th></tr></thead><tbody>'+lista.map(function(s,i){return '<tr style="background:'+(i%2?'white':'#fafafa')+'"><td style="padding:6px 8px;font-weight:600">'+s.nome+'</td><td style="padding:6px 8px;text-align:center;color:#2E6DA4;font-weight:600">'+(s.dose||'')+' '+(s.unidade||'')+'</td><td style="padding:6px 8px;text-align:center;color:#555">'+(s.freq||'')+'</td><td style="padding:6px 8px;color:#888;font-style:italic">'+(s.notas||'')+'</td></tr>';}).join('')+'</tbody></table></div>';
-    }
-    suplHTML = suplSec(ativos,'Ativos','#E8F5EE','#1E6B3A')+suplSec(pausados,'Pausados','#FFF3CD','#856404')+suplSec(desc,'Descontinuados','#FDECEA','#B02020');
-  }
-
-  let resHTML = '';
-  if(d.resultadosGrupos.length){
-    const datas = d.hist.map(function(h){return h.data;});
-    const nCols2 = datas.length;
-    const nomeColW2 = 24; const refColW2 = 16; const valColW2 = nCols2 ? ((100 - nomeColW2 - refColW2) / nCols2) : 0;
-    resHTML = d.resultadosGrupos.map(function(grupo){
-      return '<div style="margin-bottom:16px;page-break-inside:avoid"><div style="background:#2E6DA4;color:white;padding:5px 10px;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase">'+grupo.perfil+'</div>'
-        +'<table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px">'
-        +'<colgroup><col style="width:'+nomeColW2+'%"><col style="width:'+refColW2+'%">'+datas.map(function(){return '<col style="width:'+valColW2+'%">';}).join('')+'</colgroup>'
-        +'<thead><tr style="background:#f0f4f8;border-bottom:1px solid #d8e0e8">'
-        +'<th style="padding:6px 8px;text-align:left;overflow:hidden">Análise</th>'
-        +'<th style="padding:6px 8px;text-align:left;color:#888;overflow:hidden">Referência</th>'
-        +datas.map(function(dt){return '<th style="padding:6px 6px;text-align:center;overflow:hidden">'+dt+'</th>';}).join('')
-        +'</tr></thead><tbody>'
-        +grupo.rows.map(function(row,i){
-          const bg = i%2?'white':'#f9f9f9';
-          const cells = datas.map(function(dt){
-            const entry = row.vals.find(function(v){return v.data===dt;});
-            if(!entry) return '<td style="padding:6px 6px;text-align:center;color:#ccc">—</td>';
-            let color = '#1E6B3A'; let cellBg = '#E8F5EE';
-            if(row.status==='baixo'){color='#856404';cellBg='#FFF3CD';}
-            else if(row.status==='alto'){color='#B02020';cellBg='#FDECEA';}
-            return '<td style="padding:6px 6px;text-align:center;background:'+cellBg+';color:'+color+';font-weight:700">'+entry.val+(entry.unit||row.unit?' <span style="font-size:8px;font-weight:400">'+(entry.unit||row.unit)+'</span>':'')+'</td>';
-          }).join('');
-          return '<tr style="background:'+bg+';border-bottom:1px solid #f0f0f0"><td style="padding:6px 8px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+row.nome+'</td><td style="padding:6px 8px;font-size:9px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+row.ref+'</td>'+cells+'</tr>';
-        }).join('')
-        +'</tbody></table></div>';
-    }).join('');
-  }
-
-  let notasHTML = '';
-  if(d.notasPac.length){
-    notasHTML = '<section><h2>Notas Clínicas</h2>'+d.notasPac.map(function(n){return '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:#2E6DA4;margin-bottom:4px">['+new Date(n.data).toLocaleDateString('pt-PT')+']</div><div style="font-size:12px;line-height:1.6;white-space:pre-wrap">'+n.texto+'</div></div>';}).join('')+'</section>';
-  }
-
-  const fullHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:24px;color:#1e2d3d;font-size:12px}h2{font-size:14px;font-weight:700;color:#1A3A5C;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #2E6DA4}.header{background:#1A3A5C;color:white;padding:16px 20px;border-radius:8px;margin-bottom:20px}.header h1{font-size:20px;font-weight:700;margin-bottom:6px}.meta{font-size:11px;opacity:0.85}table{border-collapse:collapse}section{margin-bottom:20px}.dados-table{width:100%;margin-bottom:4px}.dados-table td{padding:6px 10px;font-size:12px;border-bottom:1px solid #eee}.dados-table td:first-child{font-weight:700;color:#1A3A5C;width:160px;background:#f5f8fc}.legenda{display:flex;gap:10px;margin:6px 0 14px;font-size:10px}.leg{padding:2px 8px;border-radius:10px;font-weight:600}@media print{body{padding:12px}}</style></head><body>'
-    +'<div class="header"><h1>RELATÓRIO CLÍNICO</h1><div class="meta">'+d.pac.nome+' · '+(d.pac.sexo==='f'?'Feminino':'Masculino')+(d.idade!=null?' · '+d.idade+' anos':'')+(d.pac.nasc?' · '+new Date(d.pac.nasc+'T12:00:00').toLocaleDateString('pt-PT'):'')+'<br>Emitido em: '+hoje+'</div></div>'
-    +'<section><h2>Dados do Paciente</h2><table class="dados-table"><tbody>'
-    +'<tr><td>Nome</td><td>'+d.pac.nome+'</td></tr>'
-    +'<tr><td>Sexo</td><td>'+(d.pac.sexo==='f'?'Feminino':'Masculino')+'</td></tr>'
-    +'<tr><td>Idade</td><td>'+(d.idade!=null?d.idade+' anos':'N/D')+'</td></tr>'
-    +(d.pac.nasc?'<tr><td>Nascimento</td><td>'+new Date(d.pac.nasc+'T12:00:00').toLocaleDateString('pt-PT')+'</td></tr>':'')
-    +(d.pac.nif?'<tr><td>NIF</td><td>'+d.pac.nif+'</td></tr>':'')
-    +(d.pac.utente?'<tr><td>Nº Utente SNS</td><td>'+d.pac.utente+'</td></tr>':'')
-    +(d.pac.seguro?'<tr><td>Seguro de Saúde</td><td>'+d.pac.seguro+'</td></tr>':'')
-    +'</tbody></table>'
-    +'</tbody></table></section>'
-    +(d.notasPac.length?'<section><h2>Notas Clínicas</h2><div style="background:#F0F4F8;border-left:4px solid #2E6DA4;padding:12px 16px;border-radius:0 6px 6px 0;font-size:12px;line-height:1.7;white-space:pre-wrap;color:#222">'+d.notasPac[d.notasPac.length-1].texto+'</div></section>':'')
-    +''
-    +(d.supl.length?'<section><h2>Suplementação Actual</h2>'+suplHTML+'</section>':'')
-    +(d.resultadosGrupos.length?'<section><h2>Resultados de Análises</h2><div class="legenda"><span class="leg" style="background:#E8F5EE;color:#1E6B3A">✓ Ideal</span><span class="leg" style="background:#FDECEA;color:#B02020">↑ Alto</span><span class="leg" style="background:#FFF3CD;color:#856404">↓ Baixo</span></div>'+resHTML+'</section>':'')
-    +'<div style="margin-top:20px;padding-top:10px;border-top:1px solid #eee;font-size:10px;color:#aaa;text-align:center">Relatório gerado pelo ClinicaScript · '+hoje+' · Documento Confidencial</div>'
-    +'</body></html>';
-
-  const win = window.open('','_blank','width=1000,height=750');
-  win.document.write(fullHTML);
-  win.document.close();
-  win.onload = function(){ setTimeout(function(){ win.print(); }, 400); };
-  showToast('PDF pronto — usa "Guardar como PDF" no diálogo de impressão');
-}
-
 async function bootFromSupabase(){
   // Always load fresh from Supabase — single source of truth
   // Clear stale local cache first
@@ -6172,55 +5407,20 @@ async function bootFromSupabase(){
   showToast('A carregar dados...', 4000);
   try{
     // 1. Pacientes
-    const pacs = await supa('GET','pacientes','','?select=*&order=nome');
+    const pacs = await supa('GET','pacientes','','?order=nome');
     if(pacs && pacs.length){
       pacientes = pacs;
       localStorage.setItem('cs_pacientes', JSON.stringify(pacientes));
-      // Load notas_clinicas from Supabase into localStorage
-      const notasMap = JSON.parse(localStorage.getItem('cs_notas')||'{}');
-      pacs.forEach(function(p){
-        if(p.notas_clinicas){
-          if(!notasMap[p.id]) notasMap[p.id] = [];
-          // Only add if not already the same text
-          const last = notasMap[p.id].length ? notasMap[p.id][notasMap[p.id].length-1] : null;
-          if(!last || last.texto !== p.notas_clinicas){
-            notasMap[p.id] = [{data: new Date().toISOString(), texto: p.notas_clinicas}];
-          }
-        }
-      });
-      localStorage.setItem('cs_notas', JSON.stringify(notasMap));
-      // Load supplementation — try supl column first, fallback to notas (legacy)
+      // Extract supplementation from notas field
       const suplMap={};
       pacs.forEach(p=>{
-        let lista = null;
-        // 1. New format: supl column (flat array)
-        if(p.supl){
-          try{
-            const parsed = JSON.parse(p.supl);
-            if(Array.isArray(parsed) && parsed.length && parsed[0] && parsed[0].lista){
-              lista = parsed[parsed.length-1].lista || [];
-            } else if(Array.isArray(parsed)){
-              lista = parsed;
-            }
-          }catch(e){}
-        }
-        // 2. Legacy format: notas column (JSON with supl key)
-        if(!lista && p.notas && p.notas.trim().startsWith('{')){
-          try{
-            const parsed = JSON.parse(p.notas);
-            if(parsed.supl && Array.isArray(parsed.supl)){
-              const raw = parsed.supl;
-              if(raw.length && raw[0].lista){
-                lista = raw[raw.length-1].lista || [];
-              } else {
-                lista = raw;
-              }
-            }
-          }catch(e){}
-        }
-        if(lista && lista.length) suplMap[p.id] = lista;
+        if(!p.notas||!p.notas.startsWith('{'))return;
+        try{
+          const parsed=JSON.parse(p.notas);
+          if(parsed.supl&&parsed.supl.length) suplMap[p.id]=parsed.supl;
+        }catch(e){}
       });
-      localStorage.setItem('cs_supl', JSON.stringify(suplMap));
+      if(Object.keys(suplMap).length) localStorage.setItem('cs_supl',JSON.stringify(suplMap));
     }
 
     // 2. Histórico de prescrições
@@ -6327,7 +5527,5 @@ function renderEvoGrid(){
 }
 
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 </body>
 </html>
