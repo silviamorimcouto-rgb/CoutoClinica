@@ -2976,7 +2976,10 @@ textarea{resize:vertical;min-height:100px}
                   <div id="supl-data-label" style="font-size:12px;color:var(--gray-400);margin-top:2px"></div>
                 </div>
                 <div style="display:flex;gap:8px">
-
+                  <button class="btn btn-secondary" onclick="abrirHistoricoSupl()" style="font-size:12px;padding:6px 12px">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Histórico
+                  </button>
                   <button class="btn btn-secondary" onclick="abrirPrescreverSupl()" style="font-size:12px;padding:6px 12px">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                     Da Biblioteca
@@ -2985,10 +2988,27 @@ textarea{resize:vertical;min-height:100px}
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg>
                     Adicionar
                   </button>
-                  <button class="btn btn-secondary" onclick="gerarPDFProtocolo({data:new Date().toISOString().slice(0,10),lista:suplAtivo})" style="font-size:12px;padding:6px 12px">⬇ PDF</button>
+                  <button class="btn btn-success" onclick="guardarProtocoloSupl()" style="font-size:12px;padding:6px 12px">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                    Guardar
+                  </button>
                 </div>
               </div>
               <div id="supl-lista"></div>
+            </div>
+            <!-- Histórico lateral -->
+            <div id="supl-hist-panel" style="display:none;width:260px;flex-shrink:0">
+              <div class="card" style="position:sticky;top:0">
+                <div class="card-header" style="background:var(--gray-50);padding:10px 14px">
+                  <h2 style="font-size:12px">Histórico de Protocolos</h2>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <button onclick="exportarProtocoloSelecionado()" title="Exportar protocolo seleccionado" style="background:none;border:1px solid var(--gray-200);border-radius:5px;cursor:pointer;padding:3px 7px;font-size:11px;color:var(--blue)">⬇ PDF</button>
+                    <button onclick="fecharHistoricoSupl()" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:16px">×</button>
+                  </div>
+                </div>
+                <div id="supl-hist-lista" style="max-height:500px;overflow-y:auto"></div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -3409,7 +3429,6 @@ function showView(v){
 }
 
 function abrirPerfil(pacId){
-  if(pacienteAtivo && suplAtivo && suplAtivo.length){ autoSaveSupl(); }
   pacienteAtivo=pacientes.find(p=>p.id===pacId);
   if(!pacienteAtivo)return;
 
@@ -4714,39 +4733,30 @@ function getSuplPac(){
 function saveSuplLocal(data){
   localStorage.setItem('cs_supl', JSON.stringify(data));
 }
-function autoSaveSupl(){
-  if(!pacienteAtivo) return;
-  const pacId = pacienteAtivo.id;
-  const lista = JSON.parse(JSON.stringify(suplAtivo));
-  const todos = getSuplPac();
-  todos[pacId] = lista;
-  saveSuplLocal(todos);
-  supa('PATCH','pacientes',{supl:JSON.stringify(lista)},`?id=eq.${pacId}`)
-    .then(()=>{
-      const lbl = document.getElementById('supl-data-label');
-      if(lbl) lbl.textContent = lista.length + ' suplementos · ✓ ' + new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-    })
-    .catch(e=>{ console.error('autoSaveSupl error:',e); });
-  const p = pacientes.find(x=>x.id===pacId);
-  if(p) p.supl = JSON.stringify(lista);
-}
 
 function renderSuplementosTab(){
   if(!pacienteAtivo) return;
   const pacId = pacienteAtivo.id;
   let todos = getSuplPac();
-  let lista = todos[pacId];
-  if(!lista && pacienteAtivo.supl){
-    try{ lista = JSON.parse(pacienteAtivo.supl); }catch(e){}
+  // Fallback: read from pacienteAtivo.notas if not in localStorage
+  if(!todos[pacId] && pacienteAtivo.notas && pacienteAtivo.notas.startsWith('{')){
+    try{
+      const parsed = JSON.parse(pacienteAtivo.notas);
+      if(parsed.supl && parsed.supl.length){
+        todos[pacId] = parsed.supl;
+        saveSuplLocal(todos);
+      }
+    }catch(e){}
   }
-  if(Array.isArray(lista) && lista.length && lista[0] && lista[0].lista){
-    lista = lista[lista.length-1].lista || [];
-    todos[pacId] = lista;
-    saveSuplLocal(todos);
+  const histPac = todos[pacId] || [];
+  if(histPac.length){
+    const last = histPac[histPac.length-1];
+    suplAtivo = JSON.parse(JSON.stringify(last.lista||[]));
+    document.getElementById('supl-data-label').textContent = 'Protocolo de ' + last.data;
+  } else {
+    suplAtivo = [];
+    document.getElementById('supl-data-label').textContent = 'Nenhum protocolo guardado ainda';
   }
-  suplAtivo = JSON.parse(JSON.stringify(lista || []));
-  const lbl = document.getElementById('supl-data-label');
-  if(lbl) lbl.textContent = suplAtivo.length ? suplAtivo.length + ' suplementos' : 'Sem suplementos';
   renderSuplLista();
 }
 
@@ -4823,7 +4833,6 @@ function guardarSuplemento(){
   else suplAtivo.push(s);
   fecharModal('modal-supl');
   renderSuplLista();
-  autoSaveSupl();
 }
 
 function apagarSuplemento(){
@@ -4832,7 +4841,6 @@ function apagarSuplemento(){
   suplAtivo.splice(suplEditIdx,1);
   fecharModal('modal-supl');
   renderSuplLista();
-  autoSaveSupl();
 }
 
 function guardarProtocoloSupl(){
