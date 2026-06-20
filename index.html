@@ -6022,12 +6022,12 @@ function renderHistoricoSuplSnapshots(){
       +'<button class="btn btn-danger" style="font-size:11px;padding:5px 9px" onclick="apagarSnapshotSupl(\''+snap.id+'\')">×</button>'
       +'</div></div>'
       +'<div id="ver-snap-'+snap.id+'" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-100)">'
-      +renderSnapshotDetalhe(snap.lista)
+      +renderSnapshotDetalhe(snap.lista, snap.id)
       +'</div></div>';
   }).join('');
 }
 
-function renderSnapshotDetalhe(lista){
+function renderSnapshotDetalhe(lista, snapId){
   const ativos = lista.filter(function(s){return s.estado==='ativo'||!s.estado;});
   const pausados = lista.filter(function(s){return s.estado==='pausado';});
   const desc = lista.filter(function(s){return s.estado==='descontinuado';});
@@ -6035,14 +6035,87 @@ function renderSnapshotDetalhe(lista){
     if(!items.length) return '';
     return '<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:'+color+';margin-bottom:6px">'+label+' ('+items.length+')</div>'
       + items.map(function(s){
-          return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gray-100);font-size:12px">'
+          const idx = lista.indexOf(s);
+          return '<div style="padding:6px 0;border-bottom:1px solid var(--gray-100)">'
+            +'<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px">'
             +'<span style="font-weight:600">'+s.nome+(s.notas?' <span style="font-weight:400;color:var(--gray-400);font-style:italic">— '+s.notas+'</span>':'')+'</span>'
+            +'<div style="display:flex;align-items:center;gap:8px">'
             +'<span style="color:var(--blue)">'+(s.dose||'')+' '+(s.unidade||'')+' '+(s.freq||'')+'</span>'
-            +'</div>';
+            +'<button onclick="editarItemSnapshot(\''+snapId+'\','+idx+')" title="Editar" style="background:none;border:1px solid var(--gray-200);border-radius:5px;cursor:pointer;padding:2px 6px;font-size:10px;color:var(--blue)">✏️</button>'
+            +'<button onclick="apagarItemSnapshot(\''+snapId+'\','+idx+')" title="Remover deste snapshot" style="background:none;border:1px solid #F5C6C3;border-radius:5px;cursor:pointer;padding:2px 6px;font-size:10px;color:#B02020">×</button>'
+            +'</div></div>'
+            +'<div id="edit-snap-item-'+snapId+'-'+idx+'" style="display:none;margin-top:8px;padding:10px;background:var(--gray-50);border-radius:6px">'
+            +'<div style="display:grid;grid-template-columns:1fr 90px 90px;gap:8px;margin-bottom:6px">'
+            +'<input id="esi-nome-'+snapId+'-'+idx+'" value="'+s.nome.replace(/"/g,'&quot;')+'" placeholder="Nome" style="font-size:12px;padding:6px 8px;border:1px solid var(--gray-200);border-radius:5px">'
+            +'<input id="esi-dose-'+snapId+'-'+idx+'" value="'+(s.dose||'').toString().replace(/"/g,'&quot;')+'" placeholder="Dose" style="font-size:12px;padding:6px 8px;border:1px solid var(--gray-200);border-radius:5px">'
+            +'<input id="esi-unidade-'+snapId+'-'+idx+'" value="'+(s.unidade||'').replace(/"/g,'&quot;')+'" placeholder="Unidade" style="font-size:12px;padding:6px 8px;border:1px solid var(--gray-200);border-radius:5px">'
+            +'</div>'
+            +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">'
+            +'<select id="esi-freq-'+snapId+'-'+idx+'" style="font-size:12px;padding:6px 8px;border:1px solid var(--gray-200);border-radius:5px">'
+            +['Diária','2x dia','3x dia','Dia sim dia não','Semanal','Conforme necessário'].map(function(f){return '<option'+(s.freq===f?' selected':'')+'>'+f+'</option>';}).join('')
+            +'</select>'
+            +'<select id="esi-estado-'+snapId+'-'+idx+'" style="font-size:12px;padding:6px 8px;border:1px solid var(--gray-200);border-radius:5px">'
+            +'<option value="ativo"'+(s.estado==='ativo'||!s.estado?' selected':'')+'>Ativo</option>'
+            +'<option value="pausado"'+(s.estado==='pausado'?' selected':'')+'>Pausado</option>'
+            +'<option value="descontinuado"'+(s.estado==='descontinuado'?' selected':'')+'>Descontinuado</option>'
+            +'</select></div>'
+            +'<textarea id="esi-notas-'+snapId+'-'+idx+'" placeholder="Notas" style="width:100%;font-size:12px;padding:6px 8px;border:1px solid var(--gray-200);border-radius:5px;resize:vertical;min-height:40px;margin-bottom:6px">'+(s.notas||'')+'</textarea>'
+            +'<div style="display:flex;gap:6px;justify-content:flex-end">'
+            +'<button onclick="cancelarEditarItemSnapshot(\''+snapId+'\','+idx+')" class="btn btn-secondary" style="font-size:11px;padding:4px 10px">Cancelar</button>'
+            +'<button onclick="guardarEditarItemSnapshot(\''+snapId+'\','+idx+')" class="btn btn-primary" style="font-size:11px;padding:4px 10px">Guardar</button>'
+            +'</div></div></div>';
         }).join('')
       + '</div>';
   }
   return secao(ativos,'Ativos','#1E6B3A') + secao(pausados,'Pausados','#856404') + secao(desc,'Descontinuados','#B02020');
+}
+
+function editarItemSnapshot(snapId, idx){
+  const el = document.getElementById('edit-snap-item-'+snapId+'-'+idx);
+  if(el) el.style.display = el.style.display==='block' ? 'none' : 'block';
+}
+function cancelarEditarItemSnapshot(snapId, idx){
+  const el = document.getElementById('edit-snap-item-'+snapId+'-'+idx);
+  if(el) el.style.display = 'none';
+}
+function guardarEditarItemSnapshot(snapId, idx){
+  if(!pacienteAtivo) return;
+  const pacId = pacienteAtivo.id;
+  const todos = getSuplHistorico();
+  const lista = todos[pacId];
+  if(!lista) return;
+  const snap = lista.find(function(s){return s.id===snapId;});
+  if(!snap || !snap.lista[idx]) return;
+  snap.lista[idx] = {
+    nome: document.getElementById('esi-nome-'+snapId+'-'+idx).value.trim(),
+    dose: document.getElementById('esi-dose-'+snapId+'-'+idx).value.trim(),
+    unidade: document.getElementById('esi-unidade-'+snapId+'-'+idx).value.trim(),
+    freq: document.getElementById('esi-freq-'+snapId+'-'+idx).value,
+    estado: document.getElementById('esi-estado-'+snapId+'-'+idx).value,
+    notas: document.getElementById('esi-notas-'+snapId+'-'+idx).value.trim()
+  };
+  saveSuplHistoricoLocal(todos);
+  supa('PATCH','pacientes',{supl_historico:JSON.stringify(lista)},`?id=eq.${pacId}`).catch(function(e){console.error(e);});
+  renderHistoricoSuplSnapshots();
+  // Re-open the view for this snapshot after re-render
+  setTimeout(function(){ toggleVerSnapshotSupl(snapId); }, 30);
+  showToast('Item do snapshot actualizado! ✓');
+}
+function apagarItemSnapshot(snapId, idx){
+  if(!pacienteAtivo) return;
+  if(!confirm('Remover este suplemento deste snapshot?')) return;
+  const pacId = pacienteAtivo.id;
+  const todos = getSuplHistorico();
+  const lista = todos[pacId];
+  if(!lista) return;
+  const snap = lista.find(function(s){return s.id===snapId;});
+  if(!snap) return;
+  snap.lista.splice(idx, 1);
+  saveSuplHistoricoLocal(todos);
+  supa('PATCH','pacientes',{supl_historico:JSON.stringify(lista)},`?id=eq.${pacId}`).catch(function(e){console.error(e);});
+  renderHistoricoSuplSnapshots();
+  setTimeout(function(){ toggleVerSnapshotSupl(snapId); }, 30);
+  showToast('Item removido do snapshot.');
 }
 
 function toggleVerSnapshotSupl(snapId){
