@@ -2637,15 +2637,26 @@ textarea{resize:vertical;min-height:100px}
 
   /* Profile header */
   #view-perfil .profile-header {
-    flex-wrap: wrap !important;
     padding: 12px !important;
+  }
+  .profile-header-top {
+    flex-wrap: wrap !important;
     gap: 10px !important;
+  }
+  .profile-header-top > div:nth-child(3) {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  .profile-nome, .profile-sub {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
   #profile-action-btns {
     width: 100% !important;
     margin-left: 0 !important;
     flex-wrap: wrap !important;
     justify-content: flex-start !important;
+    flex-basis: 100% !important;
   }
   #profile-action-btns .btn {
     flex: 1 1 auto !important;
