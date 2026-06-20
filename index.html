@@ -3039,10 +3039,15 @@ textarea{resize:vertical;min-height:100px}
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg>
                     Adicionar
                   </button>
-                  <button class="btn btn-secondary" onclick="guardarSnapshotSupl()" style="font-size:12px;padding:6px 12px" title="Guarda uma cópia do estado actual no histórico">📸 Guardar no Histórico</button>
-                  <button class="btn btn-secondary" onclick="abrirHistoricoSuplSnapshots()" style="font-size:12px;padding:6px 12px" title="Ver versões anteriores">🕐 Histórico</button>
+                  <button class="btn btn-secondary" onclick="toggleHistoricoSupl()" id="btn-toggle-hist-supl" style="font-size:12px;padding:6px 12px">📋 Ver Histórico</button>
+                  <button class="btn btn-secondary" onclick="guardarSnapshotSupl()" style="font-size:12px;padding:6px 12px" title="Guarda uma cópia do estado actual no histórico">📸 Guardar</button>
                   <button class="btn btn-secondary" onclick="gerarPDFProtocolo({data:new Date().toISOString().slice(0,10),lista:suplAtivo})" style="font-size:12px;padding:6px 12px">⬇ PDF</button>
                 </div>
+              </div>
+              <!-- HISTORICO DE SUPLEMENTACAO -->
+              <div id="supl-historico-section" style="display:none;margin-bottom:20px;border:1px solid var(--gray-200);border-radius:10px;padding:16px">
+                <div style="font-size:13px;font-weight:600;color:var(--gray-800);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--gray-200)">Histórico de Suplementação</div>
+                <div id="supl-historico-lista"></div>
               </div>
               <div id="supl-lista"></div>
             </div>
@@ -3299,20 +3304,6 @@ textarea{resize:vertical;min-height:100px}
           </button>
         </div>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL HISTORICO SUPLEMENTACAO -->
-<div class="modal-overlay" id="modal-hist-supl">
-  <div class="modal" style="max-width:600px">
-    <div class="modal-header">
-      <h2>🕐 Histórico de Suplementação</h2>
-      <button class="modal-close" onclick="fecharModal('modal-hist-supl')">×</button>
-    </div>
-    <div class="modal-body">
-      <p style="font-size:12px;color:var(--gray-400);margin-bottom:14px">Snapshots guardados manualmente. Podes restaurar uma versão anterior se necessário.</p>
-      <div id="hist-supl-lista"></div>
     </div>
   </div>
 </div>
@@ -5974,19 +5965,23 @@ function guardarSnapshotSupl(){
     lista: JSON.parse(JSON.stringify(suplAtivo))
   };
   todos[pacId].push(snapshot);
-  // Keep last 30 snapshots per patient
   if(todos[pacId].length > 30) todos[pacId] = todos[pacId].slice(-30);
   saveSuplHistoricoLocal(todos);
-  // Sync to Supabase
   supa('PATCH','pacientes',{supl_historico:JSON.stringify(todos[pacId])},`?id=eq.${pacId}`)
     .then(function(){ showToast('Snapshot guardado no histórico! ✓'); })
     .catch(function(e){ console.error(e); showToast('Snapshot guardado localmente (erro ao sincronizar).'); });
+  const p = pacientes.find(function(x){return x.id===pacId;});
+  if(p) p.supl_historico = JSON.stringify(todos[pacId]);
 }
 
-function abrirHistoricoSuplSnapshots(){
-  if(!pacienteAtivo){ showToast('Nenhum paciente activo.'); return; }
-  renderHistoricoSuplSnapshots();
-  document.getElementById('modal-hist-supl').classList.add('open');
+function toggleHistoricoSupl(){
+  const el = document.getElementById('supl-historico-section');
+  const btn = document.getElementById('btn-toggle-hist-supl');
+  if(!el) return;
+  const isOpen = el.style.display === 'block';
+  el.style.display = isOpen ? 'none' : 'block';
+  if(btn) btn.textContent = isOpen ? '📋 Ver Histórico' : '📋 Ocultar Histórico';
+  if(!isOpen) renderHistoricoSuplSnapshots();
 }
 
 function renderHistoricoSuplSnapshots(){
@@ -5994,7 +5989,6 @@ function renderHistoricoSuplSnapshots(){
   const pacId = pacienteAtivo.id;
   let todos = getSuplHistorico();
   let lista = todos[pacId];
-  // Fallback to Supabase field if not in localStorage
   if((!lista || !lista.length) && pacienteAtivo.supl_historico){
     try{
       lista = JSON.parse(pacienteAtivo.supl_historico);
@@ -6002,34 +5996,40 @@ function renderHistoricoSuplSnapshots(){
       saveSuplHistoricoLocal(todos);
     }catch(e){}
   }
-  const el = document.getElementById('hist-supl-lista');
+  const el = document.getElementById('supl-historico-lista');
   if(!el) return;
   if(!lista || !lista.length){
-    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray-400);font-size:13px">Nenhum snapshot guardado ainda.<br>Usa o botão "📸 Guardar no Histórico" para criar um.</div>';
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-400);font-size:13px">Nenhum snapshot guardado para este paciente.</div>';
     return;
   }
   el.innerHTML = lista.slice().reverse().map(function(snap){
-    const dataFmt = new Date(snap.data).toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'}) + ' às ' + new Date(snap.data).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+    const d = new Date(snap.data);
     const ativos = snap.lista.filter(function(s){return s.estado==='ativo'||!s.estado;}).length;
-    return '<div style="border:1px solid var(--gray-200);border-radius:8px;padding:12px;margin-bottom:10px">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-      +'<div><div style="font-size:13px;font-weight:600">'+dataFmt+'</div><div style="font-size:11px;color:var(--gray-400)">'+snap.lista.length+' suplementos · '+ativos+' ativos</div></div>'
-      +'<button class="btn btn-secondary" onclick="restaurarSnapshotSupl(\''+snap.id+'\')" style="font-size:11px;padding:5px 10px">↺ Restaurar</button>'
-      +'</div>'
-      +'<div style="font-size:11px;color:var(--gray-600);line-height:1.6">'+snap.lista.map(function(s){return s.nome;}).join(', ')+'</div>'
-      +'</div>';
+    const nomes = snap.lista.map(function(s){return s.nome;}).slice(0,3).join(', ');
+    const maisTxt = snap.lista.length>3 ? ' +'+(snap.lista.length-3)+' mais' : '';
+    return '<div class="hist-item">'
+      +'<div class="hist-info" style="flex:1">'
+      +'<div class="hist-meta">'
+      +'<span>📅 '+d.toLocaleDateString('pt-PT')+' '+d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})+'</span>'
+      +'<span class="badge badge-blue">'+snap.lista.length+' suplementos</span>'
+      +'<span style="color:var(--gray-400);font-size:11px">'+ativos+' ativos</span>'
+      +'<span>'+nomes+maisTxt+'</span>'
+      +'</div></div>'
+      +'<div class="hist-actions">'
+      +'<button class="btn btn-secondary" style="font-size:11px;padding:5px 11px" onclick="restaurarSnapshotSupl(\''+snap.id+'\')">↺ Restaurar</button>'
+      +'<button class="btn btn-danger" style="font-size:11px;padding:5px 9px" onclick="apagarSnapshotSupl(\''+snap.id+'\')">×</button>'
+      +'</div></div>';
   }).join('');
 }
 
 function restaurarSnapshotSupl(snapId){
   if(!pacienteAtivo) return;
-  if(!confirm('Restaurar este snapshot? Isto vai substituir a suplementação actual (a versão actual não se perde, fica também no histórico).')) return;
+  if(!confirm('Restaurar este snapshot? A versão actual será guardada automaticamente no histórico antes de restaurar.')) return;
   const pacId = pacienteAtivo.id;
   const todos = getSuplHistorico();
   const lista = todos[pacId] || [];
   const snap = lista.find(function(s){return s.id===snapId;});
   if(!snap){ showToast('Snapshot não encontrado.'); return; }
-  // Save current state as a snapshot before restoring (safety net)
   if(suplAtivo && suplAtivo.length){
     const beforeRestore = {id: Date.now().toString(), data: new Date().toISOString(), lista: JSON.parse(JSON.stringify(suplAtivo))};
     lista.push(beforeRestore);
@@ -6039,8 +6039,21 @@ function restaurarSnapshotSupl(snapId){
   autoSaveSupl();
   saveSuplHistoricoLocal(todos);
   supa('PATCH','pacientes',{supl_historico:JSON.stringify(lista)},`?id=eq.${pacId}`).catch(function(e){console.error(e);});
-  fecharModal('modal-hist-supl');
+  renderHistoricoSuplSnapshots();
   showToast('Snapshot restaurado! ✓');
+}
+
+function apagarSnapshotSupl(snapId){
+  if(!pacienteAtivo) return;
+  if(!confirm('Apagar este snapshot do histórico?')) return;
+  const pacId = pacienteAtivo.id;
+  const todos = getSuplHistorico();
+  if(!todos[pacId]) return;
+  todos[pacId] = todos[pacId].filter(function(s){return s.id!==snapId;});
+  saveSuplHistoricoLocal(todos);
+  supa('PATCH','pacientes',{supl_historico:JSON.stringify(todos[pacId])},`?id=eq.${pacId}`).catch(function(e){console.error(e);});
+  renderHistoricoSuplSnapshots();
+  showToast('Snapshot apagado.');
 }
 
 async function bootFromSupabase(){
