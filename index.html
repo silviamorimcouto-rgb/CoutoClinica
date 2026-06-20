@@ -4723,10 +4723,11 @@ function guardarNotas(){
   // Keep last 20 versions
   if(todasNotas[pacId].length > 20) todasNotas[pacId] = todasNotas[pacId].slice(-20);
   localStorage.setItem('cs_notas', JSON.stringify(todasNotas));
-  // Sync to Supabase — store as paciente notas field
-  const notasStr = texto;
-  supa('PATCH','pacientes',{notas:notasStr},`?id=eq.${pacId}`)
-    .catch(e=>console.error('Supabase notas:',e));
+  // Sync to Supabase notas_clinicas column (does not touch notas field, which holds supl legacy)
+  supa('PATCH','pacientes',{notas_clinicas:texto},`?id=eq.${pacId}`)
+    .catch(e=>console.error('Supabase notas_clinicas:',e));
+  const pn = pacientes.find(x=>x.id===pacId);
+  if(pn) pn.notas_clinicas = texto;
   showToast('Notas guardadas! ✓');
   renderNotasTab();
 }
@@ -5838,10 +5839,22 @@ async function bootFromSupabase(){
   showToast('A carregar dados...', 4000);
   try{
     // 1. Pacientes
-    const pacs = await supa('GET','pacientes','','?order=nome');
+    const pacs = await supa('GET','pacientes','','?select=*&order=nome');
     if(pacs && pacs.length){
       pacientes = pacs;
       localStorage.setItem('cs_pacientes', JSON.stringify(pacientes));
+      // Load notas_clinicas from Supabase into localStorage cs_notas
+      const notasMap = JSON.parse(localStorage.getItem('cs_notas')||'{}');
+      pacs.forEach(function(p){
+        if(p.notas_clinicas){
+          const arr = notasMap[p.id] || [];
+          const last = arr.length ? arr[arr.length-1] : null;
+          if(!last || last.texto !== p.notas_clinicas){
+            notasMap[p.id] = [{data: new Date().toISOString(), texto: p.notas_clinicas}];
+          }
+        }
+      });
+      localStorage.setItem('cs_notas', JSON.stringify(notasMap));
       // Load supplementation from supl column, fallback to legacy notas
       const suplMap={};
       pacs.forEach(p=>{
