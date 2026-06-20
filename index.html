@@ -4733,6 +4733,17 @@ function getSuplPac(){
 function saveSuplLocal(data){
   localStorage.setItem('cs_supl', JSON.stringify(data));
 }
+function autoSaveSupl(){
+  if(!pacienteAtivo) return;
+  const pacId = pacienteAtivo.id;
+  const lista = JSON.parse(JSON.stringify(suplAtivo));
+  const todos = getSuplPac();
+  todos[pacId] = lista;
+  saveSuplLocal(todos);
+  supa('PATCH','pacientes',{supl:JSON.stringify(lista)},`?id=eq.${pacId}`).catch(e=>console.error(e));
+  const p = pacientes.find(x=>x.id===pacId);
+  if(p) p.supl = JSON.stringify(lista);
+}
 
 function renderSuplementosTab(){
   if(!pacienteAtivo) return;
