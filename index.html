@@ -4844,6 +4844,7 @@ function guardarSuplemento(){
   else suplAtivo.push(s);
   fecharModal('modal-supl');
   renderSuplLista();
+  autoSaveSupl();
 }
 
 function apagarSuplemento(){
@@ -4852,6 +4853,7 @@ function apagarSuplemento(){
   suplAtivo.splice(suplEditIdx,1);
   fecharModal('modal-supl');
   renderSuplLista();
+  autoSaveSupl();
 }
 
 function guardarProtocoloSupl(){
