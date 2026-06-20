@@ -2795,7 +2795,7 @@ textarea{resize:vertical;min-height:100px}
           <div class="profile-tab" onclick="switchTab('suplementos')" id="tab-suplementos">💊 Suplementação</div>
           <div class="profile-tab" onclick="switchTab('notas')" id="tab-notas">📝 Notas</div>
           <div class="profile-tab" onclick="switchTab('documentos')" id="tab-documentos">📎 Documentos</div>
-          <div class="profile-tab" onclick="switchTab('historico')" id="tab-historico">Histórico</div>
+
         </div>
       </div>
       <div class="profile-content">
@@ -2815,6 +2815,7 @@ textarea{resize:vertical;min-height:100px}
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
             <div style="font-size:13px;color:var(--gray-600)">Selecciona as análises e gera a prescrição</div>
             <div style="display:flex;gap:8px">
+              <button class="btn btn-secondary" onclick="toggleHistoricoPresc()" id="btn-toggle-hist-presc">📋 Ver Histórico</button>
               <button class="btn btn-secondary" onclick="clearPrescricao()">Limpar</button>
               <button class="btn btn-primary" onclick="gerarDocumento()">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -2868,6 +2869,11 @@ textarea{resize:vertical;min-height:100px}
                   </button>
                 </div>
               </div>
+            </div>
+            <!-- HISTORICO DE PRESCRICOES -->
+            <div id="prescricao-historico-section" style="display:none;margin-top:20px;border:1px solid var(--gray-200);border-radius:10px;padding:16px">
+              <div style="font-size:13px;font-weight:600;color:var(--gray-800);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--gray-200)">Histórico de Prescrições</div>
+              <div id="historico-pac-list"></div>
             </div>
           </div>
         </div>
@@ -2943,12 +2949,7 @@ textarea{resize:vertical;min-height:100px}
           </div>
         </div>
 
-<!-- TAB: HISTÓRICO -->
-        <div class="tab-pane" id="pane-historico">
-          <div id="historico-pac-list"></div>
-        </div>
-
-        <!-- TAB: NOTAS -->
+<!-- TAB: NOTAS -->
         <div class="tab-pane" id="pane-notas">
           <div style="max-width:760px">
             <div class="card">
@@ -3488,7 +3489,6 @@ function switchTab(tab){
   // resumo tab removed
   if(tab==='prescricao')renderPrescricao();
   if(tab==='resultados')renderResultadosTab();
-  if(tab==='historico')renderHistoricoPac();
   if(tab==='notas')renderNotasTab();
   if(tab==='documentos')renderDocumentos();
   if(tab==='suplementos')renderSuplementosTab();
@@ -3818,9 +3818,20 @@ function guardarHistorico(){
   showToast('Prescrição guardada! ✓');
 }
 
+function toggleHistoricoPresc(){
+  const el = document.getElementById('prescricao-historico-section');
+  const btn = document.getElementById('btn-toggle-hist-presc');
+  if(!el) return;
+  const isOpen = el.style.display === 'block';
+  el.style.display = isOpen ? 'none' : 'block';
+  if(btn) btn.textContent = isOpen ? '📋 Ver Histórico' : '📋 Ocultar Histórico';
+  if(!isOpen) renderHistoricoPac();
+}
+
 function renderHistoricoPac(){
   if(!pacienteAtivo)return;
   const el=document.getElementById('historico-pac-list');
+  if(!el)return;
   const items=historico.filter(h=>h.pacienteId===pacienteAtivo.id);
   if(!items.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--gray-400);font-size:13px">Nenhuma prescrição guardada para este paciente.</div>';return;}
   el.innerHTML=items.map(h=>{
