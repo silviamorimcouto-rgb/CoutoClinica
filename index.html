@@ -2785,6 +2785,7 @@ textarea{resize:vertical;min-height:100px}
             <div class="profile-sub" id="profile-sub"></div>
           </div>
           <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn btn-ghost" onclick="gerarRelatorioIA()" style="font-size:12px;padding:5px 12px;background:#F0F7FF;color:var(--navy);border-color:var(--blue-light)">🤖 IA</button>
             <button class="btn btn-ghost" onclick="editarPacienteAtivo()" style="font-size:12px;padding:5px 12px">Editar</button>
             <button class="btn btn-danger" onclick="eliminarPacienteAtivo()" style="font-size:12px;padding:5px 10px">Apagar</button>
           </div>
@@ -5411,6 +5412,105 @@ function gerarPDFProtocolo(proto){
   win.document.close();
   win.onload = ()=>{ setTimeout(()=>win.print(), 400); };
   showToast('PDF pronto — usa "Guardar como PDF" no diálogo de impressão');
+}
+
+
+function gerarRelatorioIA(){
+  if(!pacienteAtivo){ showToast('Nenhum paciente activo.'); return; }
+  const pac = pacienteAtivo;
+  const hoje = new Date().toLocaleDateString('pt-PT');
+  const allRef = getRefFinal();
+  const hist = (resultados[pac.id] || []).slice().sort(function(a,b){return a.data.localeCompare(b.data);});
+  const supl = suplAtivo || [];
+  let idadeStr = 'N/D';
+  if(pac.nasc){
+    const nasc = new Date(pac.nasc+'T12:00:00');
+    const h2 = new Date();
+    let age = h2.getFullYear()-nasc.getFullYear();
+    if(h2 < new Date(h2.getFullYear()+'-'+pac.nasc.slice(5,10)+'T12:00:00')) age--;
+    idadeStr = age + ' anos';
+  }
+  let txt = '# RELATORIO CLINICO\n';
+  txt += 'Data: ' + hoje + '\n\n';
+  txt += '## DADOS DO PACIENTE\n';
+  txt += 'Nome: ' + pac.nome + '\n';
+  txt += 'Sexo: ' + (pac.sexo==='f'?'Feminino':'Masculino') + '\n';
+  txt += 'Idade: ' + idadeStr + '\n';
+  if(pac.nasc) txt += 'Nascimento: ' + new Date(pac.nasc+'T12:00:00').toLocaleDateString('pt-PT') + '\n';
+  if(pac.nif) txt += 'NIF: ' + pac.nif + '\n';
+  if(pac.utente) txt += 'N Utente SNS: ' + pac.utente + '\n';
+  if(pac.seguro) txt += 'Seguro: ' + pac.seguro + '\n';
+
+  const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
+  const notasPac = todasNotas[pac.id] || [];
+  if(notasPac.length){
+    txt += 'Notas: ' + notasPac[notasPac.length-1].texto + '\n';
+  }
+  txt += '\n';
+
+  if(supl.length){
+    txt += '## SUPLEMENTACAO\n';
+    const ativos = supl.filter(function(s){return s.estado==='ativo'||!s.estado;});
+    const pausados = supl.filter(function(s){return s.estado==='pausado';});
+    const desc = supl.filter(function(s){return s.estado==='descontinuado';});
+    if(ativos.length){ txt += 'Ativos:\n'; ativos.forEach(function(s){ txt += '- ' + s.nome + ': ' + (s.dose||'') + ' ' + (s.unidade||'') + ' ' + (s.freq||'') + (s.notas?' ('+s.notas+')':'') + '\n'; }); }
+    if(pausados.length){ txt += 'Pausados:\n'; pausados.forEach(function(s){ txt += '- ' + s.nome + '\n'; }); }
+    if(desc.length){ txt += 'Descontinuados:\n'; desc.forEach(function(s){ txt += '- ' + s.nome + '\n'; }); }
+    txt += '\n';
+  }
+
+  if(hist.length){
+    txt += '## RESULTADOS\n';
+    const sexo = pac.sexo || 'f';
+    const perfisVis = {};
+    allRef.forEach(function(a){
+      if(!hist.some(function(h){return h.valores&&h.valores[a.nome]!==undefined;})) return;
+      const perf = a.perfil.split('(')[0].trim();
+      if(!perfisVis[perf]) perfisVis[perf] = [];
+      perfisVis[perf].push(a);
+    });
+    Object.entries(perfisVis).forEach(function(entry){
+      const perfil = entry[0]; const lista = entry[1];
+      txt += '\n### ' + perfil + '\n';
+      lista.forEach(function(a){
+        const minV = sexo==='f'?a.min_f:a.min_m;
+        const maxV = sexo==='f'?a.max_f:a.max_m;
+        const ref = sexo==='f'?(a.ref_f||''):(a.ref_m||'');
+        const unit = a.unidade||'';
+        const vals = hist.map(function(h){
+          const v = h.valores&&h.valores[a.nome];
+          if(!v||v.valor===''||v.valor===undefined) return null;
+          const n = parseFloat(String(v.valor).replace(',','.'));
+          return isNaN(n)?null:{data:h.data,val:n};
+        }).filter(Boolean);
+        if(!vals.length) return;
+        const last = vals[vals.length-1];
+        let status = '';
+        if(minV!=null&&last.val<minV) status = ' BAIXO';
+        else if(maxV!=null&&last.val>maxV) status = ' ALTO';
+        else if(minV!=null||maxV!=null) status = ' IDEAL';
+        txt += '- ' + a.nome + ': ' + last.val + ' ' + unit + status;
+        if(ref) txt += ' [Ref: ' + ref + ']';
+        txt += '\n';
+      });
+    });
+  }
+
+  txt += '\n---\nRelatorio gerado pelo ClinicaScript\n';
+
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(function(){
+      showToast('Relatorio copiado! Cola no ChatGPT ou Claude.', 4000);
+    }).catch(function(){
+      const win = window.open('','_blank','width=800,height=600');
+      win.document.write('<pre style="padding:20px;white-space:pre-wrap;font-size:13px">'+txt+'</pre>');
+      win.document.close();
+    });
+  } else {
+    const win = window.open('','_blank','width=800,height=600');
+    win.document.write('<pre style="padding:20px;white-space:pre-wrap;font-size:13px">'+txt+'</pre>');
+    win.document.close();
+  }
 }
 
 async function bootFromSupabase(){
