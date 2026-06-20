@@ -6007,7 +6007,8 @@ function renderHistoricoSuplSnapshots(){
     const ativos = snap.lista.filter(function(s){return s.estado==='ativo'||!s.estado;}).length;
     const nomes = snap.lista.map(function(s){return s.nome;}).slice(0,3).join(', ');
     const maisTxt = snap.lista.length>3 ? ' +'+(snap.lista.length-3)+' mais' : '';
-    return '<div class="hist-item">'
+    return '<div class="hist-item" style="flex-direction:column;align-items:stretch">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between">'
       +'<div class="hist-info" style="flex:1">'
       +'<div class="hist-meta">'
       +'<span>📅 '+d.toLocaleDateString('pt-PT')+' '+d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})+'</span>'
@@ -6016,10 +6017,41 @@ function renderHistoricoSuplSnapshots(){
       +'<span>'+nomes+maisTxt+'</span>'
       +'</div></div>'
       +'<div class="hist-actions">'
+      +'<button class="btn btn-secondary" style="font-size:11px;padding:5px 11px" onclick="toggleVerSnapshotSupl(\''+snap.id+'\')" id="btn-ver-'+snap.id+'">👁 Ver</button>'
       +'<button class="btn btn-secondary" style="font-size:11px;padding:5px 11px" onclick="restaurarSnapshotSupl(\''+snap.id+'\')">↺ Restaurar</button>'
       +'<button class="btn btn-danger" style="font-size:11px;padding:5px 9px" onclick="apagarSnapshotSupl(\''+snap.id+'\')">×</button>'
+      +'</div></div>'
+      +'<div id="ver-snap-'+snap.id+'" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-100)">'
+      +renderSnapshotDetalhe(snap.lista)
       +'</div></div>';
   }).join('');
+}
+
+function renderSnapshotDetalhe(lista){
+  const ativos = lista.filter(function(s){return s.estado==='ativo'||!s.estado;});
+  const pausados = lista.filter(function(s){return s.estado==='pausado';});
+  const desc = lista.filter(function(s){return s.estado==='descontinuado';});
+  function secao(items, label, color){
+    if(!items.length) return '';
+    return '<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:'+color+';margin-bottom:6px">'+label+' ('+items.length+')</div>'
+      + items.map(function(s){
+          return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gray-100);font-size:12px">'
+            +'<span style="font-weight:600">'+s.nome+(s.notas?' <span style="font-weight:400;color:var(--gray-400);font-style:italic">— '+s.notas+'</span>':'')+'</span>'
+            +'<span style="color:var(--blue)">'+(s.dose||'')+' '+(s.unidade||'')+' '+(s.freq||'')+'</span>'
+            +'</div>';
+        }).join('')
+      + '</div>';
+  }
+  return secao(ativos,'Ativos','#1E6B3A') + secao(pausados,'Pausados','#856404') + secao(desc,'Descontinuados','#B02020');
+}
+
+function toggleVerSnapshotSupl(snapId){
+  const el = document.getElementById('ver-snap-'+snapId);
+  const btn = document.getElementById('btn-ver-'+snapId);
+  if(!el) return;
+  const isOpen = el.style.display === 'block';
+  el.style.display = isOpen ? 'none' : 'block';
+  if(btn) btn.textContent = isOpen ? '👁 Ver' : '🔼 Ocultar';
 }
 
 function restaurarSnapshotSupl(snapId){
