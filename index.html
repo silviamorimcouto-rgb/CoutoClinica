@@ -3423,6 +3423,7 @@ function showView(v){
 }
 
 function abrirPerfil(pacId){
+  if(pacienteAtivo && suplAtivo && suplAtivo.length){ autoSaveSupl(); }
   pacienteAtivo=pacientes.find(p=>p.id===pacId);
   if(!pacienteAtivo)return;
 
