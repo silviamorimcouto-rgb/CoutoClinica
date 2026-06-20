@@ -5617,6 +5617,27 @@ function gerarRelatorioIA(){
     });
   }
 
+  // ANEXO: historico de suplementacao
+  const _todosHistIA = JSON.parse(localStorage.getItem('cs_supl_historico')||'{}');
+  let suplHistIA = _todosHistIA[pac.id] || [];
+  if(!suplHistIA.length && pac.supl_historico){
+    try{ suplHistIA = JSON.parse(pac.supl_historico); }catch(e){}
+  }
+  if(suplHistIA.length){
+    suplHistIA = suplHistIA.slice().sort(function(a,b){return new Date(a.data) - new Date(b.data);});
+    txt += '\n## ANEXO - HISTORICO DE SUPLEMENTACAO\n';
+    suplHistIA.forEach(function(snap){
+      const dSnap = new Date(snap.data);
+      txt += '\n[' + dSnap.toLocaleDateString('pt-PT') + '] ' + snap.lista.length + ' suplementos:\n';
+      const ativosH = snap.lista.filter(function(s){return s.estado==='ativo'||!s.estado;});
+      const pausadosH = snap.lista.filter(function(s){return s.estado==='pausado';});
+      const descH = snap.lista.filter(function(s){return s.estado==='descontinuado';});
+      if(ativosH.length){ txt += '  Ativos: '; txt += ativosH.map(function(s){return s.nome;}).join(', ') + '\n'; }
+      if(pausadosH.length){ txt += '  Pausados: '; txt += pausadosH.map(function(s){return s.nome;}).join(', ') + '\n'; }
+      if(descH.length){ txt += '  Descontinuados: '; txt += descH.map(function(s){return s.nome;}).join(', ') + '\n'; }
+    });
+  }
+
   txt += '\n---\nRelatorio gerado pelo ClinicaScript\n';
 
   if(navigator.clipboard){
@@ -5698,7 +5719,41 @@ function buildRelatorioData(){
     });
     if(rows.length) resultadosGrupos.push({perfil:perfil,rows:rows});
   });
-  return {pac:pac,idade:idade,supl:supl,notasPac:notasPac,hist:hist,resultadosGrupos:resultadosGrupos,sexo:sexo};
+  // Load supl historico (snapshots) for the appendix section
+  let suplHistorico = [];
+  const _todosHist = JSON.parse(localStorage.getItem('cs_supl_historico')||'{}');
+  if(_todosHist[pac.id] && _todosHist[pac.id].length){
+    suplHistorico = _todosHist[pac.id];
+  } else if(pac.supl_historico){
+    try{ suplHistorico = JSON.parse(pac.supl_historico); }catch(e){}
+  }
+  suplHistorico = suplHistorico.slice().sort(function(a,b){return new Date(a.data) - new Date(b.data);});
+
+  return {pac:pac,idade:idade,supl:supl,notasPac:notasPac,hist:hist,resultadosGrupos:resultadosGrupos,sexo:sexo,suplHistorico:suplHistorico};
+}
+
+
+function buildHistoricoSuplHTML(suplHistorico){
+  if(!suplHistorico || !suplHistorico.length) return '';
+  const blocos = suplHistorico.map(function(snap){
+    const d = new Date(snap.data);
+    const dataFmt = d.toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
+    const ativos = snap.lista.filter(function(s){return s.estado==='ativo'||!s.estado;});
+    const pausados = snap.lista.filter(function(s){return s.estado==='pausado';});
+    const desc = snap.lista.filter(function(s){return s.estado==='descontinuado';});
+    function linhas(items){
+      return items.map(function(s){
+        return '<tr><td style="padding:4px 6px;font-weight:600">'+s.nome+'</td><td style="padding:4px 6px;text-align:center;color:#2E6DA4">'+(s.dose||'')+' '+(s.unidade||'')+'</td><td style="padding:4px 6px;text-align:center;color:#555">'+(s.freq||'')+'</td><td style="padding:4px 6px;color:#888;font-style:italic;font-size:9px">'+(s.notas||'')+'</td></tr>';
+      }).join('');
+    }
+    let tabela = '<table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr style="background:#f5f5f5"><th style="padding:4px 6px;text-align:left">Suplemento</th><th style="padding:4px 6px;text-align:center;width:80px">Dose</th><th style="padding:4px 6px;text-align:center;width:80px">Freq.</th><th style="padding:4px 6px;text-align:left">Notas</th></tr></thead><tbody>';
+    if(ativos.length) tabela += '<tr><td colspan="4" style="padding:5px 6px;background:#E8F5EE;color:#1E6B3A;font-weight:700;font-size:9px;text-transform:uppercase">Ativos ('+ativos.length+')</td></tr>'+linhas(ativos);
+    if(pausados.length) tabela += '<tr><td colspan="4" style="padding:5px 6px;background:#FFF3CD;color:#856404;font-weight:700;font-size:9px;text-transform:uppercase">Pausados ('+pausados.length+')</td></tr>'+linhas(pausados);
+    if(desc.length) tabela += '<tr><td colspan="4" style="padding:5px 6px;background:#FDECEA;color:#B02020;font-weight:700;font-size:9px;text-transform:uppercase">Descontinuados ('+desc.length+')</td></tr>'+linhas(desc);
+    tabela += '</tbody></table>';
+    return '<div style="margin-bottom:18px;page-break-inside:avoid"><div style="font-size:11px;font-weight:700;color:#1A3A5C;margin-bottom:6px">📅 '+dataFmt+' — '+snap.lista.length+' suplementos</div>'+tabela+'</div>';
+  }).join('');
+  return '<section style="margin-top:30px;padding-top:16px;border-top:2px dashed #ccc"><h2 style="color:#888;font-size:13px">Anexo — Histórico de Suplementação</h2><p style="font-size:10px;color:#aaa;margin-bottom:14px">Registo de protocolos anteriores, por ordem cronológica.</p>'+blocos+'</section>';
 }
 
 function gerarRelatorioPDF(){
@@ -5767,6 +5822,7 @@ function gerarRelatorioPDF(){
     +notasHTML
     +(d.supl.length?'<section><h2>Suplementação Actual</h2>'+suplHTML+'</section>':'')
     +(d.resultadosGrupos.length?'<section><h2>Resultados de Análises</h2><div class="legenda"><span class="leg" style="background:#E8F5EE;color:#1E6B3A">✓ Ideal</span><span class="leg" style="background:#FDECEA;color:#B02020">↑ Alto</span><span class="leg" style="background:#FFF3CD;color:#856404">↓ Baixo</span></div>'+resHTML+'</section>':'')
+    +buildHistoricoSuplHTML(d.suplHistorico)
     +'<div style="margin-top:20px;padding-top:10px;border-top:1px solid #eee;font-size:10px;color:#aaa;text-align:center">Relatório gerado pelo ClinicaScript · '+hoje+' · Documento Confidencial</div>'
     +'</body></html>';
 
@@ -5926,6 +5982,45 @@ async function gerarRelatorioWord(){
         borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
         rows:rows}));
       children.push(new Paragraph({spacing:{before:80,after:0},children:[]}));
+    });
+  }
+
+  // ── ANEXO: HISTORICO DE SUPLEMENTACAO ──
+  if(d.suplHistorico && d.suplHistorico.length){
+    children.push(new Paragraph({pageBreakBefore:true,children:[]}));
+    children.push(new Paragraph({spacing:{before:0,after:60},children:[new TextRun({text:'ANEXO — HISTÓRICO DE SUPLEMENTAÇÃO',font:'Arial',size:24,bold:true,color:'888888'})]}));
+    children.push(new Paragraph({spacing:{before:0,after:140},children:[new TextRun({text:'Registo de protocolos anteriores, por ordem cronológica.',font:'Arial',size:16,italics:true,color:'AAAAAA'})]}));
+
+    d.suplHistorico.forEach(function(snap){
+      const dSnap = new Date(snap.data);
+      const dataFmt = dSnap.toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
+      children.push(par('📅 '+dataFmt+' — '+snap.lista.length+' suplementos',{bold:true,color:AZ,size:20,before:120,after:60}));
+
+      const ativosH = snap.lista.filter(function(s){return s.estado==='ativo'||!s.estado;});
+      const pausadosH = snap.lista.filter(function(s){return s.estado==='pausado';});
+      const descH = snap.lista.filter(function(s){return s.estado==='descontinuado';});
+
+      function tabelaHist(lista, bgColor, label, labelColor){
+        if(!lista.length) return;
+        children.push(par(label+' ('+lista.length+')',{bold:true,color:labelColor,size:16,before:40,after:20}));
+        children.push(new Table({
+          width:{size:9200,type:WidthType.DXA},
+          columnWidths:[3200,1600,1600,2800],
+          borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
+          rows: lista.map(function(s,i){
+            return new TableRow({children:[
+              new TableCell({borders:bN,shading:{fill:i%2?WHITE:bgColor,type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:100,right:60},width:{size:3200,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:s.nome,font:'Arial',size:17,bold:true,color:'333333'})],spacing:{before:10,after:10}})]}),
+              new TableCell({borders:bN,shading:{fill:i%2?WHITE:bgColor,type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:60,right:60},width:{size:1600,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:(s.dose||'')+' '+(s.unidade||''),font:'Arial',size:16,color:BL})],spacing:{before:10,after:10}})]}),
+              new TableCell({borders:bN,shading:{fill:i%2?WHITE:bgColor,type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:60,right:60},width:{size:1600,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:s.freq||'',font:'Arial',size:15,color:'666666'})],spacing:{before:10,after:10}})]}),
+              new TableCell({borders:bN,shading:{fill:i%2?WHITE:bgColor,type:ShadingType.CLEAR},margins:{top:40,bottom:40,left:60,right:60},width:{size:2800,type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:s.notas||'',font:'Arial',size:13,italics:true,color:'999999'})],spacing:{before:10,after:10}})]})
+            ]});
+          })
+        }));
+      }
+      tabelaHist(ativosH, 'F0FAF4', 'Ativos', GR);
+      tabelaHist(pausadosH, 'FFFDF0', 'Pausados', AM);
+      tabelaHist(descH, 'FFF8F8', 'Descontinuados', RD);
+      children.push(new Paragraph({spacing:{before:100,after:0},children:[]}));
     });
   }
 
