@@ -4693,23 +4693,83 @@ function renderNotasTab(){
   const pacId = pacienteAtivo.id;
   const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
   const notasPac = todasNotas[pacId] || [];
-  // Load current note in textarea (most recent)
   const textarea = document.getElementById('notas-clinicas');
   if(textarea && notasPac.length){
     textarea.value = notasPac[notasPac.length-1].texto || '';
   } else if(textarea){
     textarea.value = '';
   }
-  // Render history
   const lista = document.getElementById('notas-historico-lista');
   if(!lista) return;
-  if(notasPac.length <= 1){ lista.innerHTML = ''; return; }
-  lista.innerHTML = '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--gray-400);margin:16px 0 10px">Versões anteriores</div>' +
-    notasPac.slice(0,-1).reverse().map(n=>`
-      <div class="nota-entry">
-        <div class="nota-entry-date">${new Date(n.data).toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
-        <div class="nota-entry-text">${n.texto}</div>
-      </div>`).join('');
+  if(!notasPac.length){ lista.innerHTML = ''; return; }
+  lista.innerHTML = '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--gray-400);margin:16px 0 10px">Histórico de Notas</div>' +
+    notasPac.slice().reverse().map(function(n,i){
+      const realIdx = notasPac.length - 1 - i;
+      return '<div class="nota-entry" style="position:relative;padding-right:80px">'
+        +'<div class="nota-entry-date" style="display:flex;align-items:center;justify-content:space-between">'
+        +'<span>'+new Date(n.data).toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'})+' '+new Date(n.data).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})+'</span>'
+        +'<div style="display:flex;gap:4px;flex-shrink:0">'
+        +'<button onclick="editarNota('+realIdx+')" title="Editar" style="background:none;border:1px solid var(--gray-200);border-radius:5px;cursor:pointer;padding:2px 7px;font-size:11px;color:var(--blue)">✏️</button>'
+        +'<button onclick="apagarNota('+realIdx+')" title="Apagar" style="background:none;border:1px solid #F5C6C3;border-radius:5px;cursor:pointer;padding:2px 7px;font-size:11px;color:#B02020">×</button>'
+        +'</div></div>'
+        +'<div class="nota-entry-text" id="nota-text-'+realIdx+'">'+n.texto+'</div>'
+        +'<div id="nota-edit-'+realIdx+'" style="display:none;margin-top:8px">'
+        +'<textarea style="width:100%;border:1px solid var(--gray-200);border-radius:6px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:80px">'+n.texto+'</textarea>'
+        +'<div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end">'
+        +'<button onclick="cancelarEditarNota('+realIdx+')" class="btn btn-secondary" style="font-size:12px;padding:4px 10px">Cancelar</button>'
+        +'<button onclick="guardarEditarNota('+realIdx+')" class="btn btn-primary" style="font-size:12px;padding:4px 10px">Guardar</button>'
+        +'</div></div></div>';
+    }).join('');
+}
+
+function editarNota(idx){
+  const editEl = document.getElementById('nota-edit-'+idx);
+  const textEl = document.getElementById('nota-text-'+idx);
+  if(!editEl||!textEl) return;
+  textEl.style.display='none';
+  editEl.style.display='block';
+}
+
+function cancelarEditarNota(idx){
+  const editEl = document.getElementById('nota-edit-'+idx);
+  const textEl = document.getElementById('nota-text-'+idx);
+  if(!editEl||!textEl) return;
+  editEl.style.display='none';
+  textEl.style.display='block';
+}
+
+function guardarEditarNota(idx){
+  if(!pacienteAtivo) return;
+  const pacId = pacienteAtivo.id;
+  const editEl = document.getElementById('nota-edit-'+idx);
+  if(!editEl) return;
+  const novoTexto = editEl.querySelector('textarea').value.trim();
+  if(!novoTexto){ showToast('A nota não pode estar vazia.'); return; }
+  const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
+  if(!todasNotas[pacId]) return;
+  todasNotas[pacId][idx].texto = novoTexto;
+  localStorage.setItem('cs_notas', JSON.stringify(todasNotas));
+  const last = todasNotas[pacId][todasNotas[pacId].length-1];
+  supa('PATCH','pacientes',{notas_clinicas:last.texto},`?id=eq.${pacId}`).catch(e=>console.error(e));
+  renderNotasTab();
+  showToast('Nota actualizada! ✓');
+}
+
+function apagarNota(idx){
+  if(!pacienteAtivo) return;
+  if(!confirm('Apagar esta nota?')) return;
+  const pacId = pacienteAtivo.id;
+  const todasNotas = JSON.parse(localStorage.getItem('cs_notas')||'{}');
+  if(!todasNotas[pacId]) return;
+  todasNotas[pacId].splice(idx, 1);
+  localStorage.setItem('cs_notas', JSON.stringify(todasNotas));
+  const remaining = todasNotas[pacId];
+  const syncText = remaining.length ? remaining[remaining.length-1].texto : '';
+  supa('PATCH','pacientes',{notas_clinicas:syncText},`?id=eq.${pacId}`).catch(e=>console.error(e));
+  const textarea = document.getElementById('notas-clinicas');
+  if(textarea) textarea.value = syncText;
+  renderNotasTab();
+  showToast('Nota apagada.');
 }
 
 function guardarNotas(){
