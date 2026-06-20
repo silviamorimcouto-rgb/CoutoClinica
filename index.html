@@ -5417,16 +5417,32 @@ async function bootFromSupabase(){
     if(pacs && pacs.length){
       pacientes = pacs;
       localStorage.setItem('cs_pacientes', JSON.stringify(pacientes));
-      // Extract supplementation from notas field
+      // Load supplementation from supl column, fallback to legacy notas
       const suplMap={};
       pacs.forEach(p=>{
-        if(!p.notas||!p.notas.startsWith('{'))return;
-        try{
-          const parsed=JSON.parse(p.notas);
-          if(parsed.supl&&parsed.supl.length) suplMap[p.id]=parsed.supl;
-        }catch(e){}
+        let lista = null;
+        if(p.supl){
+          try{
+            const parsed = JSON.parse(p.supl);
+            if(Array.isArray(parsed) && parsed.length && parsed[0] && parsed[0].lista){
+              lista = parsed[parsed.length-1].lista || [];
+            } else if(Array.isArray(parsed)){
+              lista = parsed;
+            }
+          }catch(e){}
+        }
+        if(!lista && p.notas && p.notas.trim().startsWith('{')){
+          try{
+            const parsed = JSON.parse(p.notas);
+            if(parsed.supl && Array.isArray(parsed.supl)){
+              const raw = parsed.supl;
+              lista = (raw.length && raw[0].lista) ? (raw[raw.length-1].lista||[]) : raw;
+            }
+          }catch(e){}
+        }
+        if(lista && lista.length) suplMap[p.id] = lista;
       });
-      if(Object.keys(suplMap).length) localStorage.setItem('cs_supl',JSON.stringify(suplMap));
+      localStorage.setItem('cs_supl', JSON.stringify(suplMap));
     }
 
     // 2. Histórico de prescrições
