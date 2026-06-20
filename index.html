@@ -4749,25 +4749,23 @@ function renderSuplementosTab(){
   if(!pacienteAtivo) return;
   const pacId = pacienteAtivo.id;
   let todos = getSuplPac();
-  // Fallback: read from pacienteAtivo.notas if not in localStorage
-  if(!todos[pacId] && pacienteAtivo.notas && pacienteAtivo.notas.startsWith('{')){
+  let lista = todos[pacId];
+  if(!lista && pacienteAtivo.supl){
+    try{ lista = JSON.parse(pacienteAtivo.supl); }catch(e){}
+  }
+  if(!lista && pacienteAtivo.notas && pacienteAtivo.notas.startsWith('{')){
     try{
       const parsed = JSON.parse(pacienteAtivo.notas);
-      if(parsed.supl && parsed.supl.length){
-        todos[pacId] = parsed.supl;
-        saveSuplLocal(todos);
-      }
+      if(parsed.supl && parsed.supl.length) lista = parsed.supl;
     }catch(e){}
   }
-  const histPac = todos[pacId] || [];
-  if(histPac.length){
-    const last = histPac[histPac.length-1];
-    suplAtivo = JSON.parse(JSON.stringify(last.lista||[]));
-    document.getElementById('supl-data-label').textContent = 'Protocolo de ' + last.data;
-  } else {
-    suplAtivo = [];
-    document.getElementById('supl-data-label').textContent = 'Nenhum protocolo guardado ainda';
+  if(Array.isArray(lista) && lista.length && lista[0] && lista[0].lista){
+    lista = lista[lista.length-1].lista || [];
   }
+  if(lista){ todos[pacId] = lista; saveSuplLocal(todos); }
+  suplAtivo = JSON.parse(JSON.stringify(lista || []));
+  const lbl = document.getElementById('supl-data-label');
+  if(lbl) lbl.textContent = suplAtivo.length ? suplAtivo.length + ' suplementos' : 'Sem suplementos';
   renderSuplLista();
 }
 
