@@ -3833,7 +3833,8 @@ function renderHistoricoPac(){
   if(!pacienteAtivo)return;
   const el=document.getElementById('historico-pac-list');
   if(!el)return;
-  const items=historico.filter(h=>h.pacienteId===pacienteAtivo.id);
+  const pacId=String(pacienteAtivo.id);
+  const items=historico.filter(h=>String(h.pacienteId)===pacId);
   if(!items.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--gray-400);font-size:13px">Nenhuma prescrição guardada para este paciente.</div>';return;}
   el.innerHTML=items.map(h=>{
     const d=new Date(h.data);
