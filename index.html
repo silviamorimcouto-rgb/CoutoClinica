@@ -2792,6 +2792,10 @@ textarea{resize:vertical;min-height:100px}
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
         Valores de Referência
       </div>
+      <div class="nav-item" onclick="showView('comparar')" id="nav-comparar">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Comparar Análises
+      </div>
       <div class="nav-item" onclick="showView('biblioteca-supl')" id="nav-biblioteca-supl">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
         Biblioteca Suplementos
@@ -3107,7 +3111,31 @@ textarea{resize:vertical;min-height:100px}
       </div>
     </div>
 
-  </div><!-- /main -->
+  </div><!-- ═══ VIEW: COMPARAR ANÁLISES ════════════════════════════════ -->
+    <div class="view" id="view-comparar" style="flex-direction:column">
+      <div class="topbar">
+        <span class="topbar-title">Comparar Análises</span>
+      </div>
+      <div class="content">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <h2>Seleccionar Análise</h2>
+          </div>
+          <div style="padding:16px">
+            <div style="position:relative;max-width:500px">
+              <input type="text" id="comparar-search" placeholder="Pesquisar análise... ex: PCR, Ferritina, TSH"
+                oninput="renderCompararSugestoes()"
+                style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:inherit">
+              <div id="comparar-sugestoes" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--gray-200);border-radius:0 0 8px 8px;max-height:260px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.08)"></div>
+            </div>
+            <div id="comparar-analise-label" style="margin-top:10px;font-size:13px;color:var(--gray-400)">Escreve o nome de uma análise para ver os valores de todos os pacientes.</div>
+          </div>
+        </div>
+        <div id="comparar-resultado"></div>
+      </div>
+    </div>
+
+    <!-- /main -->
 </div><!-- /app -->
 
 <!-- MODALS -->
@@ -3481,6 +3509,7 @@ function showView(v){
   if(v==='analises')renderGestaoAnalises();
   if(v==='ref-gestao')renderRefGestao();
   if(v==='biblioteca-supl'){renderBiblioteca();}
+  if(v==='comparar'){renderComparar();}
 }
 
 function abrirPerfil(pacId){
@@ -6255,6 +6284,125 @@ function apagarSnapshotSupl(snapId){
   renderHistoricoSuplSnapshots();
   showToast('Snapshot apagado.');
 }
+
+
+function renderComparar(){
+  document.getElementById('comparar-search').value = '';
+  document.getElementById('comparar-resultado').innerHTML = '';
+  document.getElementById('comparar-analise-label').textContent = 'Escreve o nome de uma análise para ver os valores de todos os pacientes.';
+}
+
+function renderCompararSugestoes(){
+  const q = document.getElementById('comparar-search').value.trim().toLowerCase();
+  const box = document.getElementById('comparar-sugestoes');
+  if(!q){ box.style.display='none'; return; }
+  const allRef = getRefFinal();
+  const matches = allRef.filter(function(a){ return a.nome.toLowerCase().includes(q); });
+  // Deduplicate by name
+  const seen = {};
+  const unique = matches.filter(function(a){ if(seen[a.nome]) return false; seen[a.nome]=true; return true; });
+  if(!unique.length){ box.style.display='none'; return; }
+  box.innerHTML = unique.slice(0,20).map(function(a){
+    return '<div onclick="selecionarCompararAnalise(\''+a.nome.replace(/'/g,"\\'")+'\')" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--gray-100)" onmouseover="this.style.background=\'#f5f8fc\'" onmouseout="this.style.background=\'white\'">'+a.nome+'<span style="font-size:11px;color:var(--gray-400);margin-left:8px">'+a.perfil+'</span></div>';
+  }).join('');
+  box.style.display='block';
+}
+
+function selecionarCompararAnalise(nome){
+  document.getElementById('comparar-search').value = nome;
+  document.getElementById('comparar-sugestoes').style.display='none';
+  document.getElementById('comparar-analise-label').textContent = '';
+  mostrarComparacao(nome);
+}
+
+function mostrarComparacao(nomeAnalise){
+  const allRef = getRefFinal();
+  const ref = allRef.find(function(a){ return a.nome === nomeAnalise; });
+  const resultado = document.getElementById('comparar-resultado');
+
+  // Collect data for all patients
+  const linhas = [];
+  pacientes.forEach(function(pac){
+    const resPac = resultados[pac.id] || [];
+    if(!resPac.length) return;
+    const sexo = pac.sexo || 'f';
+    const minV = ref ? (sexo==='f'?ref.min_f:ref.min_m) : null;
+    const maxV = ref ? (sexo==='f'?ref.max_f:ref.max_m) : null;
+    const refStr = ref ? (sexo==='f'?(ref.ref_f||''):(ref.ref_m||'')) : '';
+    const unit = ref ? (ref.unidade||'') : '';
+
+    // Get all values sorted by date
+    const vals = resPac.map(function(h){
+      const v = h.valores && h.valores[nomeAnalise];
+      if(!v || v.valor==='' || v.valor===undefined) return null;
+      const n = parseFloat(String(v.valor).replace(',','.'));
+      return isNaN(n) ? null : {data:h.data, val:parseFloat(n.toFixed(2))};
+    }).filter(Boolean).sort(function(a,b){return a.data.localeCompare(b.data);});
+
+    if(!vals.length) return;
+
+    const last = vals[vals.length-1];
+    let status = 'normal';
+    let color = '#1E6B3A'; let bg = '#E8F5EE';
+    if(minV!=null && last.val<minV){ status='baixo'; color='#856404'; bg='#FFF3CD'; }
+    else if(maxV!=null && last.val>maxV){ status='alto'; color='#B02020'; bg='#FDECEA'; }
+
+    // Age
+    let idadeStr = '—';
+    if(pac.nasc){
+      const nasc = new Date(pac.nasc+'T12:00:00');
+      const hoje = new Date();
+      let age = hoje.getFullYear()-nasc.getFullYear();
+      if(hoje < new Date(hoje.getFullYear()+'-'+pac.nasc.slice(5,10)+'T12:00:00')) age--;
+      idadeStr = age+' anos';
+    }
+
+    linhas.push({pac, last, vals, status, color, bg, refStr, unit, idadeStr});
+  });
+
+  if(!linhas.length){
+    resultado.innerHTML = '<div class="card"><div style="padding:40px;text-align:center;color:var(--gray-400)">Nenhum paciente tem valores registados para <strong>'+nomeAnalise+'</strong>.</div></div>';
+    return;
+  }
+
+  // Sort: alto first, then baixo, then normal — within each group by patient name
+  linhas.sort(function(a,b){
+    const order = {alto:0, baixo:1, normal:2};
+    if(order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
+    return a.pac.nome.localeCompare(b.pac.nome);
+  });
+
+  const refTxt = linhas[0].refStr ? ' · Ref: '+linhas[0].refStr+' '+linhas[0].unit : '';
+
+  resultado.innerHTML = '<div class="card">'
+    +'<div class="card-header"><h2>'+nomeAnalise+'<span style="font-size:12px;font-weight:400;color:var(--gray-400);margin-left:8px">'+refTxt+'</span></h2>'
+    +'<span style="font-size:12px;color:var(--gray-400)">'+linhas.length+' pacientes com dados</span></div>'
+    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+    +'<thead><tr style="background:var(--gray-50);border-bottom:2px solid var(--gray-200)">'
+    +'<th style="padding:10px 14px;text-align:left;font-weight:600">Paciente</th>'
+    +'<th style="padding:10px 10px;text-align:center;font-weight:600">Sexo</th>'
+    +'<th style="padding:10px 10px;text-align:center;font-weight:600">Idade</th>'
+    +'<th style="padding:10px 14px;text-align:center;font-weight:600">Valor Mais Recente</th>'
+    +'<th style="padding:10px 10px;text-align:center;font-weight:600">Data</th>'
+    +'<th style="padding:10px 14px;text-align:left;font-weight:600">Evolução</th>'
+    +'</tr></thead><tbody>'
+    + linhas.map(function(l, i){
+        const bg = i%2 ? 'white' : 'var(--gray-50)';
+        const evolucao = l.vals.length > 1
+          ? l.vals.map(function(v){ return '<span style="font-size:10px;color:var(--gray-400)">'+v.data.slice(0,7)+'</span> <strong style="font-size:11px">'+v.val+'</strong>'; }).join(' → ')
+          : '<span style="font-size:11px;color:var(--gray-400)">Apenas 1 registo</span>';
+        return '<tr style="background:'+bg+';border-bottom:1px solid var(--gray-100);cursor:pointer" onclick="abrirPerfil(\''+l.pac.id+'\');switchTab(\'resultados\')" title="Abrir perfil">'
+          +'<td style="padding:10px 14px;font-weight:600">'+l.pac.nome+'</td>'
+          +'<td style="padding:10px 10px;text-align:center;color:var(--gray-400)">'+(l.pac.sexo==='f'?'♀':'♂')+'</td>'
+          +'<td style="padding:10px 10px;text-align:center;color:var(--gray-400)">'+l.idadeStr+'</td>'
+          +'<td style="padding:10px 14px;text-align:center"><span style="background:'+l.bg+';color:'+l.color+';font-weight:700;padding:4px 12px;border-radius:20px;font-size:14px">'+l.last.val+' '+l.unit+'</span></td>'
+          +'<td style="padding:10px 10px;text-align:center;color:var(--gray-400);font-size:12px">'+l.last.data+'</td>'
+          +'<td style="padding:10px 14px">'+evolucao+'</td>'
+          +'</tr>';
+      }).join('')
+    +'</tbody></table></div></div>';
+}
+
 
 async function bootFromSupabase(){
   // Always load fresh from Supabase — single source of truth
