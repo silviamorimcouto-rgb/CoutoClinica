@@ -3116,7 +3116,7 @@ textarea{resize:vertical;min-height:100px}
       <div class="topbar">
         <span class="topbar-title">Comparar Análises</span>
       </div>
-      <div class="content" style="max-width:100%">
+      <div class="content" style="width:100%;box-sizing:border-box">
         <div class="card" style="margin-bottom:16px">
           <div class="card-header">
             <h2>Seleccionar Análise</h2>
@@ -6317,29 +6317,42 @@ function selecionarCompararAnalise(nome){
 
 function mostrarComparacao(nomeAnalise){
   const allRef = getRefFinal();
-  const ref = allRef.find(function(a){ return a.nome === nomeAnalise; });
+  const ref = allRef.find(function(a){ return a.nome===nomeAnalise; });
   const resultado = document.getElementById('comparar-resultado');
+  if(!resultado) return;
 
-  const linhas = [];
+  // Build data per patient
+  const cards = [];
   pacientes.forEach(function(pac){
     const resPac = resultados[pac.id] || [];
     if(!resPac.length) return;
     const sexo = pac.sexo || 'f';
     const minV = ref ? (sexo==='f'?ref.min_f:ref.min_m) : null;
     const maxV = ref ? (sexo==='f'?ref.max_f:ref.max_m) : null;
-    const refStr = ref ? (sexo==='f'?(ref.ref_f||''):(ref.ref_m||'')) : '';
+    const refTxt = ref ? (sexo==='f'?(ref.ref_f||''):(ref.ref_m||'')) : '';
     const unit = ref ? (ref.unidade||'') : '';
-    const vals = resPac.map(function(h){
+
+    const entries = resPac.map(function(h){
       const v = h.valores && h.valores[nomeAnalise];
       if(!v || v.valor==='' || v.valor===undefined) return null;
       const n = parseFloat(String(v.valor).replace(',','.'));
-      return isNaN(n) ? null : {data:h.data, val:parseFloat(n.toFixed(2))};
+      return isNaN(n) ? null : {data:h.data, val:parseFloat(n.toFixed(2)), unidade:v.unidade||unit};
     }).filter(Boolean).sort(function(a,b){return a.data.localeCompare(b.data);});
-    if(!vals.length) return;
-    const last = vals[vals.length-1];
+
+    if(!entries.length) return;
+
+    const last = entries[entries.length-1];
     let status = 'normal';
     if(minV!=null && last.val<minV) status='baixo';
     else if(maxV!=null && last.val>maxV) status='alto';
+
+    const allVals = entries.map(function(e){return e.val;});
+    const safeMin = minV!=null ? minV : Math.min.apply(null,allVals);
+    const safeMax = maxV!=null ? maxV : Math.max.apply(null,allVals);
+    const chartMin = Math.min.apply(null, allVals.concat([safeMin]))*0.85;
+    const chartMax = Math.max.apply(null, allVals.concat([safeMax]))*1.15 || 10;
+    const range = chartMax-chartMin || 1;
+
     let idadeStr = '—';
     if(pac.nasc){
       const nasc = new Date(pac.nasc+'T12:00:00');
@@ -6348,116 +6361,65 @@ function mostrarComparacao(nomeAnalise){
       if(hoje < new Date(hoje.getFullYear()+'-'+pac.nasc.slice(5,10)+'T12:00:00')) age--;
       idadeStr = age+' anos';
     }
-    linhas.push({pac:pac, last:last, vals:vals, status:status, refStr:refStr, unit:unit, idadeStr:idadeStr, minV:minV, maxV:maxV});
+
+    const statusColor = status==='alto'?'#B02020':status==='baixo'?'#856404':'#2E7D52';
+    const statusBg = status==='alto'?'#FDECEA':status==='baixo'?'#FFF3CD':'#E8F5EE';
+    const statusLabel = status==='alto'?'↑ Alto':status==='baixo'?'↓ Baixo':'✓ Ideal';
+    const initials = pac.nome.split(' ').map(function(n){return n[0];}).slice(0,2).join('');
+
+    let evoRows = '';
+    entries.forEach(function(e){
+      const pct = Math.max(0,Math.min(100,((e.val-chartMin)/range)*100));
+      let c='#2E7D52';
+      if(minV!=null && e.val<minV) c='#856404';
+      if(maxV!=null && e.val>maxV) c='#B02020';
+      evoRows += '<div class="evo-entry" style="padding:5px 14px;background:none;border-bottom:1px solid var(--gray-100)">'
+        +'<span class="evo-date" style="min-width:75px;font-size:11px">'+e.data+'</span>'
+        +'<span class="evo-val" style="color:'+c+';font-size:13px;min-width:55px">'+fmt2(e.val)+' '+e.unidade+'</span>'
+        +'<div class="evo-bar-wrap"><div class="evo-bar" style="width:'+pct+'%;background:'+c+'"></div></div>'
+        +'</div>';
+    });
+
+    cards.push({pac:pac, idadeStr:idadeStr, status:status, statusColor:statusColor, statusBg:statusBg, statusLabel:statusLabel, last:last, unit:unit, refTxt:refTxt, initials:initials, evoRows:evoRows});
   });
 
-  if(!linhas.length){
+  if(!cards.length){
     resultado.innerHTML = '<div class="card"><div style="padding:40px;text-align:center;color:var(--gray-400)">Nenhum paciente tem valores registados para <strong>'+nomeAnalise+'</strong>.</div></div>';
     return;
   }
 
-  linhas.sort(function(a,b){
+  // Sort: alto, baixo, normal — then by name
+  cards.sort(function(a,b){
     const order = {alto:0, baixo:1, normal:2};
-    if(order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
+    if(order[a.status]!==order[b.status]) return order[a.status]-order[b.status];
     return a.pac.nome.localeCompare(b.pac.nome);
   });
 
-  const refTxt = linhas[0].refStr ? 'Ref: '+linhas[0].refStr+(linhas[0].unit?' '+linhas[0].unit:'') : '';
-  const unit = linhas[0].unit || '';
-
-  const cards = linhas.map(function(l){
-    const statusColor = l.status==='alto' ? '#B02020' : l.status==='baixo' ? '#856404' : '#1E6B3A';
-    const statusBg = l.status==='alto' ? '#FDECEA' : l.status==='baixo' ? '#FFF3CD' : '#E8F5EE';
-    const statusLabel = l.status==='alto' ? '↑ Alto' : l.status==='baixo' ? '↓ Baixo' : '✓ Ideal';
-    const initials = l.pac.nome.split(' ').map(function(n){return n[0];}).slice(0,2).join('');
-    const tabelaHeaders = l.vals.map(function(v){
-      return '<th style="padding:5px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--gray-400);white-space:nowrap">'+v.data+'</th>';
-    }).join('');
-    const tabelaCols = l.vals.map(function(v){
-      let cellColor = '#1E6B3A'; let cellBg = '#E8F5EE';
-      if(l.minV!=null && v.val<l.minV){ cellColor='#856404'; cellBg='#FFF3CD'; }
-      else if(l.maxV!=null && v.val>l.maxV){ cellColor='#B02020'; cellBg='#FDECEA'; }
-      const isLast = v.data === l.last.data;
-      return '<td style="padding:6px 10px;text-align:center;background:'+cellBg+';color:'+cellColor+';font-weight:'+(isLast?'700':'500')+';font-size:'+(isLast?'15px':'13px')+';border-bottom:3px solid '+(isLast?cellColor:'transparent')+'">'+v.val+(unit?' <span style="font-size:9px;font-weight:400">'+unit+'</span>':'')+'</td>';
-    }).join('');
-    return '<div class="card" style="margin-bottom:12px">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--gray-100);flex-wrap:wrap;gap:8px">'
-      +'<div style="display:flex;align-items:center;gap:10px">'
-      +'<div style="width:36px;height:36px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">'+initials+'</div>'
-      +'<div><div style="font-size:14px;font-weight:600">'+l.pac.nome+'</div>'
-      +'<div style="font-size:11px;color:var(--gray-400)">'+(l.pac.sexo==='f'?'Feminino':'Masculino')+' · '+l.idadeStr+'</div></div></div>'
-      +'<div style="display:flex;align-items:center;gap:10px">'
-      +(refTxt?'<span style="font-size:11px;color:var(--gray-400)">'+refTxt+'</span>':'')
-      +'<span style="background:'+statusBg+';color:'+statusColor+';font-weight:700;padding:5px 14px;border-radius:20px;font-size:13px">'+statusLabel+' '+l.last.val+(unit?' '+unit:'')+'</span>'
-      +'<button onclick="abrirPerfil(&quot;'+l.pac.id+'&quot;);switchTab(&quot;resultados&quot;)" class="btn btn-secondary" style="font-size:11px;padding:5px 10px">Ver perfil →</button>'
-      +'</div></div>'
-      +'<div style="overflow-x:auto"><table style="border-collapse:collapse;min-width:100%">'
-      +'<thead><tr style="background:var(--gray-50)">'+tabelaHeaders+'</tr></thead>'
-      +'<tbody><tr>'+tabelaCols+'</tr></tbody>'
-      +'</table></div></div>';
-  }).join('');
-
-  resultado.innerHTML = '<div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
-    +'<div style="font-size:13px;color:var(--gray-600)">'+linhas.length+' pacientes com dados para <strong>'+nomeAnalise+'</strong></div>'
+  const html2 = '<div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
+    +'<div style="font-size:13px;color:var(--gray-600)">'+cards.length+' pacientes com dados para <strong>'+nomeAnalise+'</strong></div>'
     +'<div style="display:flex;gap:6px;font-size:11px">'
     +'<span style="background:#FDECEA;color:#B02020;padding:3px 8px;border-radius:10px;font-weight:600">↑ Alto</span>'
     +'<span style="background:#FFF3CD;color:#856404;padding:3px 8px;border-radius:10px;font-weight:600">↓ Baixo</span>'
     +'<span style="background:#E8F5EE;color:#1E6B3A;padding:3px 8px;border-radius:10px;font-weight:600">✓ Ideal</span>'
-    +'</div></div>'+cards;
+    +'</div></div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">'
+    + cards.map(function(c){
+        return '<div class="card" style="margin:0">'
+          +'<div class="card-header" style="padding:10px 14px;background:var(--gray-50)">'
+          +'<div style="display:flex;align-items:center;gap:10px">'
+          +'<div style="width:32px;height:32px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0">'+c.initials+'</div>'
+          +'<div><div style="font-size:13px;font-weight:600">'+c.pac.nome+'</div>'
+          +'<div style="font-size:10px;color:var(--gray-400)">'+c.idadeStr+(c.refTxt?' · Ref: '+c.refTxt+(c.unit?' '+c.unit:''):'')+'</div></div></div>'
+          +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<span style="background:'+c.statusBg+';color:'+c.statusColor+';font-weight:700;padding:3px 10px;border-radius:14px;font-size:12px">'+c.statusLabel+' '+c.last.val+(c.unit?' '+c.unit:'')+'</span>'
+          +'<button onclick="abrirPerfil(&quot;'+c.pac.id+'&quot;);switchTab(&quot;resultados&quot;)" class="btn btn-secondary" style="font-size:10px;padding:4px 8px">Ver →</button>'
+          +'</div></div>'
+          +'<div style="padding:6px 0">'+c.evoRows+'</div>'
+          +'</div>';
+      }).join('')
+    +'</div>';
+
+  resultado.innerHTML = html2;
 }
 
-function toggleEvoGrid(){const grid=document.getElementById("evo-grid-container");const entrada=document.getElementById("res-analises-container");const master=document.getElementById("res-master-panel");const btn=document.getElementById("btn-evo-grid");const isOpen=grid&&grid.style.display!=="none";if(isOpen){if(grid)grid.style.display="none";if(entrada)entrada.style.display="";if(btn){btn.style.background="";btn.style.color="";}}else{if(grid)grid.style.display="";if(entrada)entrada.style.display="none";if(master)master.style.display="none";if(btn){btn.style.background="var(--blue-light)";btn.style.color="var(--navy)";}renderEvoGrid();}}
-
-function renderEvoGrid(){
-  if(!pacienteAtivo)return;
-  const pacId=pacienteAtivo.id,sexo=document.getElementById("res-sexo")?.value||"f";
-  const hist=resultados[pacId]||[],container=document.getElementById("evo-grid-container");
-  if(!container)return;
-
-  // Group by perfil, only markers with data
-  const perfisMarcadores={};
-  getRefFinal().forEach(a=>{
-    const entries=hist.filter(r=>r.valores&&r.valores[a.nome]!==undefined&&r.valores[a.nome].valor!=="")
-      .map(r=>({data:r.data,val:parseFloat(String(r.valores[a.nome].valor).replace(",",".")),unidade:r.valores[a.nome].unidade||a.unidade||""}))
-      .filter(e=>!isNaN(e.val));
-    if(!entries.length)return;
-    const perfil=a.perfil||"Outros";
-    const nomeC=perfil.split("(")[0].trim();
-    if(!perfisMarcadores[nomeC])perfisMarcadores[nomeC]=[];
-    perfisMarcadores[nomeC].push({ref:a,entries});
-  });
-
-  if(!Object.keys(perfisMarcadores).length){
-    container.innerHTML="<div style='text-align:center;padding:40px;color:var(--gray-400)'>Sem dados de evolucao.</div>";
-    return;
-  }
-
-  let out="";
-  Object.entries(perfisMarcadores).forEach(([perfil,marcadores])=>{
-    out+=`<div style="margin-bottom:28px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray-400);padding:0 2px;margin-bottom:12px;border-bottom:2px solid var(--gray-200);padding-bottom:8px">${perfil}</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px">`;
-
-    marcadores.forEach(({ref:a,entries})=>{
-      const minV=sexo==="f"?a.min_f:a.min_m,maxV=sexo==="f"?a.max_f:a.max_m;
-      const refTxt=sexo==="f"?(a.ref_f||""):(a.ref_m||"");
-      const allVals=entries.map(e=>e.val);
-      const chartMin=Math.min(...allVals,minV??Infinity)*0.85,chartMax=Math.max(...allVals,maxV??0)*1.15||10,range=chartMax-chartMin||1;
-      out+=`<div class="card" style="margin:0"><div class="card-header" style="padding:10px 14px;background:var(--gray-50)"><div><div style="font-size:13px;font-weight:600;color:var(--gray-800)">${a.nome}</div>${refTxt?`<div style="font-size:10px;color:var(--gray-400);margin-top:1px">${refTxt}${a.unidade?" "+a.unidade:""}</div>`:""}</div></div><div style="padding:6px 0">`;
-      entries.forEach(e=>{
-        const pct=Math.max(0,Math.min(100,((e.val-chartMin)/range)*100));
-        let c="#2E7D52";
-        if(minV!==null&&minV!==undefined&&e.val<minV)c="#856404";
-        if(maxV!==null&&maxV!==undefined&&e.val>maxV)c="#B02020";
-        out+=`<div class="evo-entry" style="padding:5px 14px;background:none;border-bottom:1px solid var(--gray-100)"><span class="evo-date" style="min-width:75px;font-size:11px">${e.data}</span><span class="evo-val" style="color:${c};font-size:13px;min-width:55px">${fmt2(e.val)} ${e.unidade}</span><div class="evo-bar-wrap"><div class="evo-bar" style="width:${pct}%;background:${c}"></div></div></div>`;
-      });
-      out+="</div></div>";
-    });
-    out+="</div></div>";
-  });
-  container.innerHTML=out;
-}
-
-</script>
-</body>
-</html>
+>
