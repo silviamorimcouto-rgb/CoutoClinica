@@ -3602,60 +3602,81 @@ function renderPacientesCards(){
 // ─── RESUMO TAB ───────────────────────────────────────────────────────────────
 function renderResumo(){
   if(!pacienteAtivo)return;
-  const pac=pacienteAtivo;
-  const presc=historico.filter(h=>h.pacienteId===pac.id).length;
-  const resArr=resultados[pac.id]||[];
-  const totalMarcadores=new Set(resArr.flatMap(r=>Object.keys(r.valores||{}))).size;
+  var pac=pacienteAtivo;
+  var presc=historico.filter(function(h){return String(h.pacienteId)===String(pac.id);}).length;
+  var resArr=resultados[pac.id]||[];
+  var totalMarcadores=new Set(resArr.flatMap(function(r){return Object.keys(r.valores||{});})).size;
   document.getElementById('stat-prescricoes').textContent=presc;
   document.getElementById('stat-datas').textContent=resArr.length;
   document.getElementById('stat-marcadores').textContent=totalMarcadores;
-  // Last results summary
-  const lastRes=resArr[resArr.length-1];
-  const el=document.getElementById('resumo-last-results');
-  if(!lastRes){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--gray-400);font-size:13px">Sem resultados de análises registados.</div>';return;}
-  const sexo=lastRes.sexo||pac.sexo||'f';
-  const allRef=getRefFinal();
-  const entries=Object.entries(lastRes.valores||{}).slice(0,20);
-  let ideal=0,alto=0,baixo=0;
-  entries.forEach(([nome,v])=>{
-    const ref=allRef.find(a=>a.nome===nome);
-    if(!ref)return;
-    const n=parseFloat(String(v.valor).replace(',','.'));
+  var el=document.getElementById('resumo-last-results');
+  if(!resArr.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--gray-400);font-size:13px">Sem resultados de análises registados.</div>';
+    return;
+  }
+  // Use most recent result entry
+  var sorted=resArr.slice().sort(function(a,b){return a.data.localeCompare(b.data);});
+  var lastRes=sorted[sorted.length-1];
+  var sexo=lastRes.sexo||pac.sexo||'f';
+  var allRef=getRefFinal();
+  // Collect all values, split into fora/ideais
+  var fora=[], ideais=[], semRef=0;
+  Object.entries(lastRes.valores||{}).forEach(function(entry){
+    var nome=entry[0]; var v=entry[1];
+    if(v.valor===''||v.valor===undefined||v.valor===null)return;
+    var n=parseFloat(String(v.valor).replace(',','.'));
     if(isNaN(n))return;
-    const minV=sexo==='f'?ref.min_f:ref.min_m;
-    const maxV=sexo==='f'?ref.max_f:ref.max_m;
-    if(minV!==null&&n<minV)baixo++;
-    else if(maxV!==null&&n>maxV)alto++;
-    else if(minV!==null||maxV!==null)ideal++;
+    var ref=allRef.find(function(a){return a.nome===nome;});
+    if(!ref){semRef++;return;}
+    var minV=sexo==='f'?ref.min_f:ref.min_m;
+    var maxV=sexo==='f'?ref.max_f:ref.max_m;
+    var refTxt=sexo==='f'?(ref.ref_f||''):(ref.ref_m||'');
+    var unit=v.unidade||ref.unidade||'';
+    if(minV!==null&&n<minV){
+      fora.push({nome:nome,val:n,unit:unit,ref:refTxt,status:'baixo',color:'#856404',bg:'#FFF3CD',label:'↓ Baixo'});
+    } else if(maxV!==null&&n>maxV){
+      fora.push({nome:nome,val:n,unit:unit,ref:refTxt,status:'alto',color:'#B02020',bg:'#FDECEA',label:'↑ Alto'});
+    } else if(minV!==null||maxV!==null){
+      ideais.push(nome);
+    }
   });
-  el.innerHTML=`<div class="recent-results">
-    <div class="recent-results-hdr" style="display:flex;align-items:center;justify-content:space-between">
-      <span>Últimos Resultados — ${lastRes.data}</span>
-      <div style="display:flex;gap:8px;font-size:11px">
-        <span style="color:#2E7D52;font-weight:600">✓ ${ideal} ideais</span>
-        <span style="color:#B02020;font-weight:600">↑ ${alto} altos</span>
-        <span style="color:#856404;font-weight:600">↓ ${baixo} baixos</span>
-      </div>
-    </div>
-    ${entries.map(([nome,v])=>{
-      const ref=allRef.find(a=>a.nome===nome);
-      const n=parseFloat(String(v.valor).replace(',','.'));
-      let color='var(--gray-800)',badge='';
-      if(ref&&!isNaN(n)){
-        const minV=sexo==='f'?ref.min_f:ref.min_m;
-        const maxV=sexo==='f'?ref.max_f:ref.max_m;
-        if(minV!==null&&n<minV){color='#856404';badge='<span class="badge-low">↓</span>';}
-        else if(maxV!==null&&n>maxV){color='#B02020';badge='<span class="badge-high">↑</span>';}
-        else if(minV!==null||maxV!==null){color='#2E7D52';badge='<span class="badge-ok">✓</span>';}
-      }
-      return `<div class="recent-result-row">
-        <span class="recent-result-nome">${nome}</span>
-        <span class="recent-result-val" style="color:${color}">${fmt2(v.valor)} ${v.unidade||''}</span>
-        ${badge}
-      </div>`;
-    }).join('')}
-    ${Object.keys(lastRes.valores||{}).length>20?`<div style="padding:8px 18px;font-size:12px;color:var(--gray-400)">+${Object.keys(lastRes.valores).length-20} mais análises</div>`:''}
-  </div>`;
+  // Sort: altos first, then baixos
+  fora.sort(function(a,b){
+    if(a.status==='alto'&&b.status!=='alto')return -1;
+    if(b.status==='alto'&&a.status!=='alto')return 1;
+    return a.nome.localeCompare(b.nome);
+  });
+  var rows='';
+  if(!fora.length){
+    rows='<div style="text-align:center;padding:30px;color:#2E7D52;font-size:14px;font-weight:600">✓ Todos os valores dentro dos limites de referência</div>';
+  } else {
+    rows='<table style="width:100%;border-collapse:collapse;font-size:13px">'
+      +'<thead><tr style="background:var(--gray-50);border-bottom:2px solid var(--gray-200)">'
+      +'<th style="padding:9px 14px;text-align:left;font-weight:600">Análise</th>'
+      +'<th style="padding:9px 14px;text-align:center;font-weight:600">Valor</th>'
+      +'<th style="padding:9px 14px;text-align:left;font-weight:600">Referência</th>'
+      +'<th style="padding:9px 14px;text-align:center;font-weight:600">Estado</th>'
+      +'</tr></thead><tbody>';
+    fora.forEach(function(r,i){
+      rows+='<tr style="background:'+(i%2?'white':'var(--gray-50)')+';border-bottom:1px solid var(--gray-100)">'
+        +'<td style="padding:9px 14px;font-weight:600">'+r.nome+'</td>'
+        +'<td style="padding:9px 14px;text-align:center;font-weight:700;color:'+r.color+'">'+fmt2(r.val)+(r.unit?' '+r.unit:'')+'</td>'
+        +'<td style="padding:9px 14px;color:var(--gray-400);font-size:12px">'+r.ref+(r.unit?' '+r.unit:'')+'</td>'
+        +'<td style="padding:9px 14px;text-align:center"><span style="background:'+r.bg+';color:'+r.color+';font-weight:700;padding:3px 10px;border-radius:12px;font-size:12px">'+r.label+'</span></td>'
+        +'</tr>';
+    });
+    rows+='</tbody></table>';
+  }
+  el.innerHTML='<div style="margin-top:20px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+    +'<div style="font-size:13px;font-weight:600;color:var(--gray-800)">Valores fora de referência — '+lastRes.data+'</div>'
+    +'<div style="display:flex;gap:8px;font-size:11px">'
+    +(fora.filter(function(r){return r.status==='alto';}).length?'<span style="background:#FDECEA;color:#B02020;padding:3px 8px;border-radius:10px;font-weight:600">↑ '+fora.filter(function(r){return r.status==='alto';}).length+' altos</span>':'')
+    +(fora.filter(function(r){return r.status==='baixo';}).length?'<span style="background:#FFF3CD;color:#856404;padding:3px 8px;border-radius:10px;font-weight:600">↓ '+fora.filter(function(r){return r.status==='baixo';}).length+' baixos</span>':'')
+    +(ideais.length?'<span style="background:#E8F5EE;color:#2E7D52;padding:3px 8px;border-radius:10px;font-weight:600">✓ '+ideais.length+' ideais</span>':'')
+    +'</div></div>'
+    +rows
+    +'</div>';
 }
 
 // ─── PRESCRIÇÃO TAB ───────────────────────────────────────────────────────────
