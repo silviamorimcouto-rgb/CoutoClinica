@@ -3116,19 +3116,19 @@ textarea{resize:vertical;min-height:100px}
       <div class="topbar">
         <span class="topbar-title">Comparar Análises</span>
       </div>
-      <div class="content">
+      <div class="content" style="max-width:100%">
         <div class="card" style="margin-bottom:16px">
           <div class="card-header">
             <h2>Seleccionar Análise</h2>
           </div>
           <div style="padding:16px">
-            <div style="position:relative;max-width:500px">
-              <input type="text" id="comparar-search" placeholder="Pesquisar análise... ex: PCR, Ferritina, TSH"
+            <div style="position:relative">
+              <input type="text" id="comparar-search" placeholder="Pesquisar análise... ex: PCR-us, Ferritina, TSH"
                 oninput="renderCompararSugestoes()"
                 style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:inherit">
               <div id="comparar-sugestoes" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--gray-200);border-radius:0 0 8px 8px;max-height:260px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.08)"></div>
             </div>
-            <div id="comparar-analise-label" style="margin-top:10px;font-size:13px;color:var(--gray-400)">Escreve o nome de uma análise para ver os valores de todos os pacientes.</div>
+            <div id="comparar-analise-label" style="margin-top:10px;font-size:13px;color:var(--gray-400)">Escreve o nome de uma análise para ver a evolução de todos os pacientes.</div>
           </div>
         </div>
         <div id="comparar-resultado"></div>
@@ -6320,7 +6320,6 @@ function mostrarComparacao(nomeAnalise){
   const ref = allRef.find(function(a){ return a.nome === nomeAnalise; });
   const resultado = document.getElementById('comparar-resultado');
 
-  // Collect data for all patients
   const linhas = [];
   pacientes.forEach(function(pac){
     const resPac = resultados[pac.id] || [];
@@ -6330,24 +6329,17 @@ function mostrarComparacao(nomeAnalise){
     const maxV = ref ? (sexo==='f'?ref.max_f:ref.max_m) : null;
     const refStr = ref ? (sexo==='f'?(ref.ref_f||''):(ref.ref_m||'')) : '';
     const unit = ref ? (ref.unidade||'') : '';
-
-    // Get all values sorted by date
     const vals = resPac.map(function(h){
       const v = h.valores && h.valores[nomeAnalise];
       if(!v || v.valor==='' || v.valor===undefined) return null;
       const n = parseFloat(String(v.valor).replace(',','.'));
       return isNaN(n) ? null : {data:h.data, val:parseFloat(n.toFixed(2))};
     }).filter(Boolean).sort(function(a,b){return a.data.localeCompare(b.data);});
-
     if(!vals.length) return;
-
     const last = vals[vals.length-1];
     let status = 'normal';
-    let color = '#1E6B3A'; let bg = '#E8F5EE';
-    if(minV!=null && last.val<minV){ status='baixo'; color='#856404'; bg='#FFF3CD'; }
-    else if(maxV!=null && last.val>maxV){ status='alto'; color='#B02020'; bg='#FDECEA'; }
-
-    // Age
+    if(minV!=null && last.val<minV) status='baixo';
+    else if(maxV!=null && last.val>maxV) status='alto';
     let idadeStr = '—';
     if(pac.nasc){
       const nasc = new Date(pac.nasc+'T12:00:00');
@@ -6356,8 +6348,7 @@ function mostrarComparacao(nomeAnalise){
       if(hoje < new Date(hoje.getFullYear()+'-'+pac.nasc.slice(5,10)+'T12:00:00')) age--;
       idadeStr = age+' anos';
     }
-
-    linhas.push({pac, last, vals, status, color, bg, refStr, unit, idadeStr});
+    linhas.push({pac:pac, last:last, vals:vals, status:status, refStr:refStr, unit:unit, idadeStr:idadeStr, minV:minV, maxV:maxV});
   });
 
   if(!linhas.length){
@@ -6365,150 +6356,55 @@ function mostrarComparacao(nomeAnalise){
     return;
   }
 
-  // Sort: alto first, then baixo, then normal — within each group by patient name
   linhas.sort(function(a,b){
     const order = {alto:0, baixo:1, normal:2};
     if(order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
     return a.pac.nome.localeCompare(b.pac.nome);
   });
 
-  const refTxt = linhas[0].refStr ? ' · Ref: '+linhas[0].refStr+' '+linhas[0].unit : '';
+  const refTxt = linhas[0].refStr ? 'Ref: '+linhas[0].refStr+(linhas[0].unit?' '+linhas[0].unit:'') : '';
+  const unit = linhas[0].unit || '';
 
-  resultado.innerHTML = '<div class="card">'
-    +'<div class="card-header"><h2>'+nomeAnalise+'<span style="font-size:12px;font-weight:400;color:var(--gray-400);margin-left:8px">'+refTxt+'</span></h2>'
-    +'<span style="font-size:12px;color:var(--gray-400)">'+linhas.length+' pacientes com dados</span></div>'
-    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'
-    +'<thead><tr style="background:var(--gray-50);border-bottom:2px solid var(--gray-200)">'
-    +'<th style="padding:10px 14px;text-align:left;font-weight:600">Paciente</th>'
-    +'<th style="padding:10px 10px;text-align:center;font-weight:600">Sexo</th>'
-    +'<th style="padding:10px 10px;text-align:center;font-weight:600">Idade</th>'
-    +'<th style="padding:10px 14px;text-align:center;font-weight:600">Valor Mais Recente</th>'
-    +'<th style="padding:10px 10px;text-align:center;font-weight:600">Data</th>'
-    +'<th style="padding:10px 14px;text-align:left;font-weight:600">Evolução</th>'
-    +'</tr></thead><tbody>'
-    + linhas.map(function(l, i){
-        const bg = i%2 ? 'white' : 'var(--gray-50)';
-        const evolucao = l.vals.length > 1
-          ? l.vals.map(function(v){ return '<span style="font-size:10px;color:var(--gray-400)">'+v.data.slice(0,7)+'</span> <strong style="font-size:11px">'+v.val+'</strong>'; }).join(' → ')
-          : '<span style="font-size:11px;color:var(--gray-400)">Apenas 1 registo</span>';
-        return '<tr style="background:'+bg+';border-bottom:1px solid var(--gray-100);cursor:pointer" onclick="abrirPerfil(\''+l.pac.id+'\');switchTab(\'resultados\')" title="Abrir perfil">'
-          +'<td style="padding:10px 14px;font-weight:600">'+l.pac.nome+'</td>'
-          +'<td style="padding:10px 10px;text-align:center;color:var(--gray-400)">'+(l.pac.sexo==='f'?'♀':'♂')+'</td>'
-          +'<td style="padding:10px 10px;text-align:center;color:var(--gray-400)">'+l.idadeStr+'</td>'
-          +'<td style="padding:10px 14px;text-align:center"><span style="background:'+l.bg+';color:'+l.color+';font-weight:700;padding:4px 12px;border-radius:20px;font-size:14px">'+l.last.val+' '+l.unit+'</span></td>'
-          +'<td style="padding:10px 10px;text-align:center;color:var(--gray-400);font-size:12px">'+l.last.data+'</td>'
-          +'<td style="padding:10px 14px">'+evolucao+'</td>'
-          +'</tr>';
-      }).join('')
-    +'</tbody></table></div></div>';
+  const cards = linhas.map(function(l){
+    const statusColor = l.status==='alto' ? '#B02020' : l.status==='baixo' ? '#856404' : '#1E6B3A';
+    const statusBg = l.status==='alto' ? '#FDECEA' : l.status==='baixo' ? '#FFF3CD' : '#E8F5EE';
+    const statusLabel = l.status==='alto' ? '↑ Alto' : l.status==='baixo' ? '↓ Baixo' : '✓ Ideal';
+    const initials = l.pac.nome.split(' ').map(function(n){return n[0];}).slice(0,2).join('');
+    const tabelaHeaders = l.vals.map(function(v){
+      return '<th style="padding:5px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--gray-400);white-space:nowrap">'+v.data+'</th>';
+    }).join('');
+    const tabelaCols = l.vals.map(function(v){
+      let cellColor = '#1E6B3A'; let cellBg = '#E8F5EE';
+      if(l.minV!=null && v.val<l.minV){ cellColor='#856404'; cellBg='#FFF3CD'; }
+      else if(l.maxV!=null && v.val>l.maxV){ cellColor='#B02020'; cellBg='#FDECEA'; }
+      const isLast = v.data === l.last.data;
+      return '<td style="padding:6px 10px;text-align:center;background:'+cellBg+';color:'+cellColor+';font-weight:'+(isLast?'700':'500')+';font-size:'+(isLast?'15px':'13px')+';border-bottom:3px solid '+(isLast?cellColor:'transparent')+'">'+v.val+(unit?' <span style="font-size:9px;font-weight:400">'+unit+'</span>':'')+'</td>';
+    }).join('');
+    return '<div class="card" style="margin-bottom:12px">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--gray-100);flex-wrap:wrap;gap:8px">'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<div style="width:36px;height:36px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">'+initials+'</div>'
+      +'<div><div style="font-size:14px;font-weight:600">'+l.pac.nome+'</div>'
+      +'<div style="font-size:11px;color:var(--gray-400)">'+(l.pac.sexo==='f'?'Feminino':'Masculino')+' · '+l.idadeStr+'</div></div></div>'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +(refTxt?'<span style="font-size:11px;color:var(--gray-400)">'+refTxt+'</span>':'')
+      +'<span style="background:'+statusBg+';color:'+statusColor+';font-weight:700;padding:5px 14px;border-radius:20px;font-size:13px">'+statusLabel+' '+l.last.val+(unit?' '+unit:'')+'</span>'
+      +'<button onclick="abrirPerfil(&quot;'+l.pac.id+'&quot;);switchTab(&quot;resultados&quot;)" class="btn btn-secondary" style="font-size:11px;padding:5px 10px">Ver perfil →</button>'
+      +'</div></div>'
+      +'<div style="overflow-x:auto"><table style="border-collapse:collapse;min-width:100%">'
+      +'<thead><tr style="background:var(--gray-50)">'+tabelaHeaders+'</tr></thead>'
+      +'<tbody><tr>'+tabelaCols+'</tr></tbody>'
+      +'</table></div></div>';
+  }).join('');
+
+  resultado.innerHTML = '<div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
+    +'<div style="font-size:13px;color:var(--gray-600)">'+linhas.length+' pacientes com dados para <strong>'+nomeAnalise+'</strong></div>'
+    +'<div style="display:flex;gap:6px;font-size:11px">'
+    +'<span style="background:#FDECEA;color:#B02020;padding:3px 8px;border-radius:10px;font-weight:600">↑ Alto</span>'
+    +'<span style="background:#FFF3CD;color:#856404;padding:3px 8px;border-radius:10px;font-weight:600">↓ Baixo</span>'
+    +'<span style="background:#E8F5EE;color:#1E6B3A;padding:3px 8px;border-radius:10px;font-weight:600">✓ Ideal</span>'
+    +'</div></div>'+cards;
 }
-
-
-async function bootFromSupabase(){
-  // Always load fresh from Supabase — single source of truth
-  // Clear stale local cache first
-  localStorage.removeItem('cs_pacientes');
-  localStorage.removeItem('cs_historico');
-  localStorage.removeItem('cs_resultados');
-  localStorage.removeItem('cs_supl');
-
-  showToast('A carregar dados...', 4000);
-  try{
-    // 1. Pacientes
-    const pacs = await supa('GET','pacientes','','?select=*&order=nome');
-    if(pacs && pacs.length){
-      pacientes = pacs;
-      localStorage.setItem('cs_pacientes', JSON.stringify(pacientes));
-      // Load notas_clinicas from Supabase into localStorage cs_notas
-      const notasMap = JSON.parse(localStorage.getItem('cs_notas')||'{}');
-      pacs.forEach(function(p){
-        if(p.notas_clinicas){
-          const arr = notasMap[p.id] || [];
-          const last = arr.length ? arr[arr.length-1] : null;
-          if(!last || last.texto !== p.notas_clinicas){
-            notasMap[p.id] = [{data: new Date().toISOString(), texto: p.notas_clinicas}];
-          }
-        }
-      });
-      localStorage.setItem('cs_notas', JSON.stringify(notasMap));
-      // Load supplementation from supl column, fallback to legacy notas
-      const suplMap={};
-      pacs.forEach(p=>{
-        let lista = null;
-        if(p.supl){
-          try{
-            const parsed = JSON.parse(p.supl);
-            if(Array.isArray(parsed) && parsed.length && parsed[0] && parsed[0].lista){
-              lista = parsed[parsed.length-1].lista || [];
-            } else if(Array.isArray(parsed)){
-              lista = parsed;
-            }
-          }catch(e){}
-        }
-        if(!lista && p.notas && p.notas.trim().startsWith('{')){
-          try{
-            const parsed = JSON.parse(p.notas);
-            if(parsed.supl && Array.isArray(parsed.supl)){
-              const raw = parsed.supl;
-              lista = (raw.length && raw[0].lista) ? (raw[raw.length-1].lista||[]) : raw;
-            }
-          }catch(e){}
-        }
-        if(lista && lista.length) suplMap[p.id] = lista;
-      });
-      localStorage.setItem('cs_supl', JSON.stringify(suplMap));
-    }
-
-    // 2. Histórico de prescrições
-    const presc = await supa('GET','prescricoes','','?order=data.desc&limit=200');
-    if(presc && presc.length){
-      historico = presc.map(h=>({
-        id:h.id, data:h.data, pacienteNome:h.paciente_nome,
-        pacienteNif:h.paciente_nif, pacienteSeguro:h.paciente_seguro,
-        pacienteLocal:h.paciente_local, pacienteId:h.paciente_id,
-        analises:h.analises||{}, ecos:h.ecos||[], obs:h.obs||'', total:h.total||0
-      }));
-      localStorage.setItem('cs_historico', JSON.stringify(historico));
-    }
-
-    // 3. Resultados de análises
-    const resRows = await supa('GET','resultados','','?order=data');
-    if(resRows && resRows.length){
-      const resObj={};
-      resRows.forEach(r=>{
-        if(!resObj[r.paciente_id]) resObj[r.paciente_id]=[];
-        resObj[r.paciente_id].push({data:r.data, sexo:r.sexo||'f', valores:r.valores||{}});
-      });
-      resultados = resObj;
-      localStorage.setItem('cs_resultados', JSON.stringify(resultados));
-    }
-
-    // 4. Ref overrides
-    const overrides = await supa('GET','ref_overrides','','');
-    if(overrides && overrides.length){
-      refOverrides={};
-      overrides.forEach(r=>{refOverrides[r.nome]=r.dados;});
-      localStorage.setItem('cs_ref_overrides', JSON.stringify(refOverrides));
-    }
-
-    // 5. Ref user
-    const refU = await supa('GET','ref_user','','');
-    if(refU && refU.length)
-      localStorage.setItem('cs_ref_user', JSON.stringify(refU.map(r=>r.dados)));
-
-    showToast('Dados carregados! ✓');
-  } catch(e){
-    console.warn('Supabase error:', e);
-    // Fallback to localStorage cache if Supabase fails
-    const cached = localStorage.getItem('cs_pacientes');
-    if(cached) pacientes = JSON.parse(cached);
-    showToast('Sem ligação — a usar dados locais');
-  }
-  renderPacientesCards();
-}
-
-
-bootFromSupabase();
 
 function toggleEvoGrid(){const grid=document.getElementById("evo-grid-container");const entrada=document.getElementById("res-analises-container");const master=document.getElementById("res-master-panel");const btn=document.getElementById("btn-evo-grid");const isOpen=grid&&grid.style.display!=="none";if(isOpen){if(grid)grid.style.display="none";if(entrada)entrada.style.display="";if(btn){btn.style.background="";btn.style.color="";}}else{if(grid)grid.style.display="";if(entrada)entrada.style.display="none";if(master)master.style.display="none";if(btn){btn.style.background="var(--blue-light)";btn.style.color="var(--navy)";}renderEvoGrid();}}
 
