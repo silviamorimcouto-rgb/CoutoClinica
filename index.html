@@ -3111,26 +3111,13 @@ textarea{resize:vertical;min-height:100px}
       </div>
     </div>
 
-    </div><!-- ═══ VIEW: COMPARAR ANÁLISES ═══════════════════════════════ -->
+
+    <!-- ═══ VIEW: COMPARAR ANÁLISES ═══════════════════════════════ -->
     <div class="view" id="view-comparar" style="flex-direction:column">
       <div class="topbar">
         <span class="topbar-title">Comparar Análises</span>
       </div>
-      <div class="content">
-        <div class="card" style="margin-bottom:16px">
-          <div class="card-header"><h2>Seleccionar Análise</h2></div>
-          <div style="padding:16px">
-            <div style="position:relative">
-              <input type="text" id="comparar-search" placeholder="Pesquisar análise... ex: PCR-us, Ferritina, TSH"
-                oninput="renderCompararSugestoes()"
-                style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:inherit">
-              <div id="comparar-sugestoes" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--gray-200);border-radius:0 0 8px 8px;max-height:260px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.08)"></div>
-            </div>
-            <div id="comparar-label" style="margin-top:10px;font-size:13px;color:var(--gray-400)">Escreve o nome de uma análise para ver a evolução de todos os pacientes.</div>
-          </div>
-        </div>
-        <div id="comparar-resultado"></div>
-      </div>
+      <div class="content" id="comparar-container"></div>
     </div>
 
     <!-- /main -->
@@ -3507,7 +3494,7 @@ function showView(v){
   if(v==='analises')renderGestaoAnalises();
   if(v==='ref-gestao')renderRefGestao();
   if(v==='biblioteca-supl'){renderBiblioteca();}
-  if(v==='comparar'){document.getElementById('comparar-search').value='';document.getElementById('comparar-resultado').innerHTML='';}
+  if(v==='comparar'){renderComparar();}
 }
 
 function abrirPerfil(pacId){
@@ -6283,6 +6270,21 @@ function apagarSnapshotSupl(snapId){
   showToast('Snapshot apagado.');
 }
 
+
+function renderComparar(){
+  var container = document.getElementById('comparar-container');
+  if(!container) return;
+  container.innerHTML = '<div class="card" style="margin-bottom:16px">'
+    +'<div class="card-header"><h2>Seleccionar Análise</h2></div>'
+    +'<div style="padding:16px">'
+    +'<div style="position:relative">'
+    +'<input type="text" id="comparar-search" placeholder="Pesquisar análise... ex: PCR-us, Ferritina, TSH" oninput="renderCompararSugestoes()" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:inherit">'
+    +'<div id="comparar-sugestoes" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--gray-200);border-radius:0 0 8px 8px;max-height:260px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.08)"></div>'
+    +'</div>'
+    +'<div id="comparar-label" style="margin-top:10px;font-size:13px;color:var(--gray-400)">Escreve o nome de uma análise para ver a evolução de todos os pacientes.</div>'
+    +'</div></div>'
+    +'<div id="comparar-resultado"></div>';
+}
 
 function renderCompararSugestoes(){
   var q = document.getElementById('comparar-search').value.trim().toLowerCase();
