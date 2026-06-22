@@ -2792,10 +2792,6 @@ textarea{resize:vertical;min-height:100px}
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
         Valores de Referência
       </div>
-      <div class="nav-item" onclick="showView('comparar')" id="nav-comparar">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        Comparar Análises
-      </div>
       <div class="nav-item" onclick="showView('biblioteca-supl')" id="nav-biblioteca-supl">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
         Biblioteca Suplementos
@@ -3111,31 +3107,7 @@ textarea{resize:vertical;min-height:100px}
       </div>
     </div>
 
-  </div><!-- ═══ VIEW: COMPARAR ANÁLISES ════════════════════════════════ -->
-    <div class="view" id="view-comparar" style="flex-direction:column">
-      <div class="topbar">
-        <span class="topbar-title">Comparar Análises</span>
-      </div>
-      <div class="content" style="width:100%;box-sizing:border-box">
-        <div class="card" style="margin-bottom:16px">
-          <div class="card-header">
-            <h2>Seleccionar Análise</h2>
-          </div>
-          <div style="padding:16px">
-            <div style="position:relative">
-              <input type="text" id="comparar-search" placeholder="Pesquisar análise... ex: PCR-us, Ferritina, TSH"
-                oninput="renderCompararSugestoes()"
-                style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:inherit">
-              <div id="comparar-sugestoes" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--gray-200);border-radius:0 0 8px 8px;max-height:260px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.08)"></div>
-            </div>
-            <div id="comparar-analise-label" style="margin-top:10px;font-size:13px;color:var(--gray-400)">Escreve o nome de uma análise para ver a evolução de todos os pacientes.</div>
-          </div>
-        </div>
-        <div id="comparar-resultado"></div>
-      </div>
-    </div>
-
-    <!-- /main -->
+  </div><!-- /main -->
 </div><!-- /app -->
 
 <!-- MODALS -->
@@ -3509,7 +3481,6 @@ function showView(v){
   if(v==='analises')renderGestaoAnalises();
   if(v==='ref-gestao')renderRefGestao();
   if(v==='biblioteca-supl'){renderBiblioteca();}
-  if(v==='comparar'){renderComparar();}
 }
 
 function abrirPerfil(pacId){
@@ -6285,141 +6256,164 @@ function apagarSnapshotSupl(snapId){
   showToast('Snapshot apagado.');
 }
 
+async function bootFromSupabase(){
+  // Always load fresh from Supabase — single source of truth
+  // Clear stale local cache first
+  localStorage.removeItem('cs_pacientes');
+  localStorage.removeItem('cs_historico');
+  localStorage.removeItem('cs_resultados');
+  localStorage.removeItem('cs_supl');
 
-function renderComparar(){
-  document.getElementById('comparar-search').value = '';
-  document.getElementById('comparar-resultado').innerHTML = '';
-  document.getElementById('comparar-analise-label').textContent = 'Escreve o nome de uma análise para ver os valores de todos os pacientes.';
-}
-
-function renderCompararSugestoes(){
-  const q = document.getElementById('comparar-search').value.trim().toLowerCase();
-  const box = document.getElementById('comparar-sugestoes');
-  if(!q){ box.style.display='none'; return; }
-  const allRef = getRefFinal();
-  const matches = allRef.filter(function(a){ return a.nome.toLowerCase().includes(q); });
-  // Deduplicate by name
-  const seen = {};
-  const unique = matches.filter(function(a){ if(seen[a.nome]) return false; seen[a.nome]=true; return true; });
-  if(!unique.length){ box.style.display='none'; return; }
-  box.innerHTML = unique.slice(0,20).map(function(a){
-    return '<div onclick="selecionarCompararAnalise(\''+a.nome.replace(/'/g,"\\'")+'\')" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--gray-100)" onmouseover="this.style.background=\'#f5f8fc\'" onmouseout="this.style.background=\'white\'">'+a.nome+'<span style="font-size:11px;color:var(--gray-400);margin-left:8px">'+a.perfil+'</span></div>';
-  }).join('');
-  box.style.display='block';
-}
-
-function selecionarCompararAnalise(nome){
-  document.getElementById('comparar-search').value = nome;
-  document.getElementById('comparar-sugestoes').style.display='none';
-  document.getElementById('comparar-analise-label').textContent = '';
-  mostrarComparacao(nome);
-}
-
-function mostrarComparacao(nomeAnalise){
-  const allRef = getRefFinal();
-  const ref = allRef.find(function(a){ return a.nome===nomeAnalise; });
-  const resultado = document.getElementById('comparar-resultado');
-  if(!resultado) return;
-
-  // Build data per patient
-  const cards = [];
-  pacientes.forEach(function(pac){
-    const resPac = resultados[pac.id] || [];
-    if(!resPac.length) return;
-    const sexo = pac.sexo || 'f';
-    const minV = ref ? (sexo==='f'?ref.min_f:ref.min_m) : null;
-    const maxV = ref ? (sexo==='f'?ref.max_f:ref.max_m) : null;
-    const refTxt = ref ? (sexo==='f'?(ref.ref_f||''):(ref.ref_m||'')) : '';
-    const unit = ref ? (ref.unidade||'') : '';
-
-    const entries = resPac.map(function(h){
-      const v = h.valores && h.valores[nomeAnalise];
-      if(!v || v.valor==='' || v.valor===undefined) return null;
-      const n = parseFloat(String(v.valor).replace(',','.'));
-      return isNaN(n) ? null : {data:h.data, val:parseFloat(n.toFixed(2)), unidade:v.unidade||unit};
-    }).filter(Boolean).sort(function(a,b){return a.data.localeCompare(b.data);});
-
-    if(!entries.length) return;
-
-    const last = entries[entries.length-1];
-    let status = 'normal';
-    if(minV!=null && last.val<minV) status='baixo';
-    else if(maxV!=null && last.val>maxV) status='alto';
-
-    const allVals = entries.map(function(e){return e.val;});
-    const safeMin = minV!=null ? minV : Math.min.apply(null,allVals);
-    const safeMax = maxV!=null ? maxV : Math.max.apply(null,allVals);
-    const chartMin = Math.min.apply(null, allVals.concat([safeMin]))*0.85;
-    const chartMax = Math.max.apply(null, allVals.concat([safeMax]))*1.15 || 10;
-    const range = chartMax-chartMin || 1;
-
-    let idadeStr = '—';
-    if(pac.nasc){
-      const nasc = new Date(pac.nasc+'T12:00:00');
-      const hoje = new Date();
-      let age = hoje.getFullYear()-nasc.getFullYear();
-      if(hoje < new Date(hoje.getFullYear()+'-'+pac.nasc.slice(5,10)+'T12:00:00')) age--;
-      idadeStr = age+' anos';
+  showToast('A carregar dados...', 4000);
+  try{
+    // 1. Pacientes
+    const pacs = await supa('GET','pacientes','','?select=*&order=nome');
+    if(pacs && pacs.length){
+      pacientes = pacs;
+      localStorage.setItem('cs_pacientes', JSON.stringify(pacientes));
+      // Load notas_clinicas from Supabase into localStorage cs_notas
+      const notasMap = JSON.parse(localStorage.getItem('cs_notas')||'{}');
+      pacs.forEach(function(p){
+        if(p.notas_clinicas){
+          const arr = notasMap[p.id] || [];
+          const last = arr.length ? arr[arr.length-1] : null;
+          if(!last || last.texto !== p.notas_clinicas){
+            notasMap[p.id] = [{data: new Date().toISOString(), texto: p.notas_clinicas}];
+          }
+        }
+      });
+      localStorage.setItem('cs_notas', JSON.stringify(notasMap));
+      // Load supplementation from supl column, fallback to legacy notas
+      const suplMap={};
+      pacs.forEach(p=>{
+        let lista = null;
+        if(p.supl){
+          try{
+            const parsed = JSON.parse(p.supl);
+            if(Array.isArray(parsed) && parsed.length && parsed[0] && parsed[0].lista){
+              lista = parsed[parsed.length-1].lista || [];
+            } else if(Array.isArray(parsed)){
+              lista = parsed;
+            }
+          }catch(e){}
+        }
+        if(!lista && p.notas && p.notas.trim().startsWith('{')){
+          try{
+            const parsed = JSON.parse(p.notas);
+            if(parsed.supl && Array.isArray(parsed.supl)){
+              const raw = parsed.supl;
+              lista = (raw.length && raw[0].lista) ? (raw[raw.length-1].lista||[]) : raw;
+            }
+          }catch(e){}
+        }
+        if(lista && lista.length) suplMap[p.id] = lista;
+      });
+      localStorage.setItem('cs_supl', JSON.stringify(suplMap));
     }
 
-    const statusColor = status==='alto'?'#B02020':status==='baixo'?'#856404':'#2E7D52';
-    const statusBg = status==='alto'?'#FDECEA':status==='baixo'?'#FFF3CD':'#E8F5EE';
-    const statusLabel = status==='alto'?'↑ Alto':status==='baixo'?'↓ Baixo':'✓ Ideal';
-    const initials = pac.nome.split(' ').map(function(n){return n[0];}).slice(0,2).join('');
+    // 2. Histórico de prescrições
+    const presc = await supa('GET','prescricoes','','?order=data.desc&limit=200');
+    if(presc && presc.length){
+      historico = presc.map(h=>({
+        id:h.id, data:h.data, pacienteNome:h.paciente_nome,
+        pacienteNif:h.paciente_nif, pacienteSeguro:h.paciente_seguro,
+        pacienteLocal:h.paciente_local, pacienteId:h.paciente_id,
+        analises:h.analises||{}, ecos:h.ecos||[], obs:h.obs||'', total:h.total||0
+      }));
+      localStorage.setItem('cs_historico', JSON.stringify(historico));
+    }
 
-    let evoRows = '';
-    entries.forEach(function(e){
-      const pct = Math.max(0,Math.min(100,((e.val-chartMin)/range)*100));
-      let c='#2E7D52';
-      if(minV!=null && e.val<minV) c='#856404';
-      if(maxV!=null && e.val>maxV) c='#B02020';
-      evoRows += '<div class="evo-entry" style="padding:5px 14px;background:none;border-bottom:1px solid var(--gray-100)">'
-        +'<span class="evo-date" style="min-width:75px;font-size:11px">'+e.data+'</span>'
-        +'<span class="evo-val" style="color:'+c+';font-size:13px;min-width:55px">'+fmt2(e.val)+' '+e.unidade+'</span>'
-        +'<div class="evo-bar-wrap"><div class="evo-bar" style="width:'+pct+'%;background:'+c+'"></div></div>'
-        +'</div>';
-    });
+    // 3. Resultados de análises
+    const resRows = await supa('GET','resultados','','?order=data');
+    if(resRows && resRows.length){
+      const resObj={};
+      resRows.forEach(r=>{
+        if(!resObj[r.paciente_id]) resObj[r.paciente_id]=[];
+        resObj[r.paciente_id].push({data:r.data, sexo:r.sexo||'f', valores:r.valores||{}});
+      });
+      resultados = resObj;
+      localStorage.setItem('cs_resultados', JSON.stringify(resultados));
+    }
 
-    cards.push({pac:pac, idadeStr:idadeStr, status:status, statusColor:statusColor, statusBg:statusBg, statusLabel:statusLabel, last:last, unit:unit, refTxt:refTxt, initials:initials, evoRows:evoRows});
+    // 4. Ref overrides
+    const overrides = await supa('GET','ref_overrides','','');
+    if(overrides && overrides.length){
+      refOverrides={};
+      overrides.forEach(r=>{refOverrides[r.nome]=r.dados;});
+      localStorage.setItem('cs_ref_overrides', JSON.stringify(refOverrides));
+    }
+
+    // 5. Ref user
+    const refU = await supa('GET','ref_user','','');
+    if(refU && refU.length)
+      localStorage.setItem('cs_ref_user', JSON.stringify(refU.map(r=>r.dados)));
+
+    showToast('Dados carregados! ✓');
+  } catch(e){
+    console.warn('Supabase error:', e);
+    // Fallback to localStorage cache if Supabase fails
+    const cached = localStorage.getItem('cs_pacientes');
+    if(cached) pacientes = JSON.parse(cached);
+    showToast('Sem ligação — a usar dados locais');
+  }
+  renderPacientesCards();
+}
+
+
+bootFromSupabase();
+
+function toggleEvoGrid(){const grid=document.getElementById("evo-grid-container");const entrada=document.getElementById("res-analises-container");const master=document.getElementById("res-master-panel");const btn=document.getElementById("btn-evo-grid");const isOpen=grid&&grid.style.display!=="none";if(isOpen){if(grid)grid.style.display="none";if(entrada)entrada.style.display="";if(btn){btn.style.background="";btn.style.color="";}}else{if(grid)grid.style.display="";if(entrada)entrada.style.display="none";if(master)master.style.display="none";if(btn){btn.style.background="var(--blue-light)";btn.style.color="var(--navy)";}renderEvoGrid();}}
+
+function renderEvoGrid(){
+  if(!pacienteAtivo)return;
+  const pacId=pacienteAtivo.id,sexo=document.getElementById("res-sexo")?.value||"f";
+  const hist=resultados[pacId]||[],container=document.getElementById("evo-grid-container");
+  if(!container)return;
+
+  // Group by perfil, only markers with data
+  const perfisMarcadores={};
+  getRefFinal().forEach(a=>{
+    const entries=hist.filter(r=>r.valores&&r.valores[a.nome]!==undefined&&r.valores[a.nome].valor!=="")
+      .map(r=>({data:r.data,val:parseFloat(String(r.valores[a.nome].valor).replace(",",".")),unidade:r.valores[a.nome].unidade||a.unidade||""}))
+      .filter(e=>!isNaN(e.val));
+    if(!entries.length)return;
+    const perfil=a.perfil||"Outros";
+    const nomeC=perfil.split("(")[0].trim();
+    if(!perfisMarcadores[nomeC])perfisMarcadores[nomeC]=[];
+    perfisMarcadores[nomeC].push({ref:a,entries});
   });
 
-  if(!cards.length){
-    resultado.innerHTML = '<div class="card"><div style="padding:40px;text-align:center;color:var(--gray-400)">Nenhum paciente tem valores registados para <strong>'+nomeAnalise+'</strong>.</div></div>';
+  if(!Object.keys(perfisMarcadores).length){
+    container.innerHTML="<div style='text-align:center;padding:40px;color:var(--gray-400)'>Sem dados de evolucao.</div>";
     return;
   }
 
-  // Sort: alto, baixo, normal — then by name
-  cards.sort(function(a,b){
-    const order = {alto:0, baixo:1, normal:2};
-    if(order[a.status]!==order[b.status]) return order[a.status]-order[b.status];
-    return a.pac.nome.localeCompare(b.pac.nome);
+  let out="";
+  Object.entries(perfisMarcadores).forEach(([perfil,marcadores])=>{
+    out+=`<div style="margin-bottom:28px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray-400);padding:0 2px;margin-bottom:12px;border-bottom:2px solid var(--gray-200);padding-bottom:8px">${perfil}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px">`;
+
+    marcadores.forEach(({ref:a,entries})=>{
+      const minV=sexo==="f"?a.min_f:a.min_m,maxV=sexo==="f"?a.max_f:a.max_m;
+      const refTxt=sexo==="f"?(a.ref_f||""):(a.ref_m||"");
+      const allVals=entries.map(e=>e.val);
+      const chartMin=Math.min(...allVals,minV??Infinity)*0.85,chartMax=Math.max(...allVals,maxV??0)*1.15||10,range=chartMax-chartMin||1;
+      out+=`<div class="card" style="margin:0"><div class="card-header" style="padding:10px 14px;background:var(--gray-50)"><div><div style="font-size:13px;font-weight:600;color:var(--gray-800)">${a.nome}</div>${refTxt?`<div style="font-size:10px;color:var(--gray-400);margin-top:1px">${refTxt}${a.unidade?" "+a.unidade:""}</div>`:""}</div></div><div style="padding:6px 0">`;
+      entries.forEach(e=>{
+        const pct=Math.max(0,Math.min(100,((e.val-chartMin)/range)*100));
+        let c="#2E7D52";
+        if(minV!==null&&minV!==undefined&&e.val<minV)c="#856404";
+        if(maxV!==null&&maxV!==undefined&&e.val>maxV)c="#B02020";
+        out+=`<div class="evo-entry" style="padding:5px 14px;background:none;border-bottom:1px solid var(--gray-100)"><span class="evo-date" style="min-width:75px;font-size:11px">${e.data}</span><span class="evo-val" style="color:${c};font-size:13px;min-width:55px">${fmt2(e.val)} ${e.unidade}</span><div class="evo-bar-wrap"><div class="evo-bar" style="width:${pct}%;background:${c}"></div></div></div>`;
+      });
+      out+="</div></div>";
+    });
+    out+="</div></div>";
   });
-
-  const html2 = '<div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
-    +'<div style="font-size:13px;color:var(--gray-600)">'+cards.length+' pacientes com dados para <strong>'+nomeAnalise+'</strong></div>'
-    +'<div style="display:flex;gap:6px;font-size:11px">'
-    +'<span style="background:#FDECEA;color:#B02020;padding:3px 8px;border-radius:10px;font-weight:600">↑ Alto</span>'
-    +'<span style="background:#FFF3CD;color:#856404;padding:3px 8px;border-radius:10px;font-weight:600">↓ Baixo</span>'
-    +'<span style="background:#E8F5EE;color:#1E6B3A;padding:3px 8px;border-radius:10px;font-weight:600">✓ Ideal</span>'
-    +'</div></div>'
-    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">'
-    + cards.map(function(c){
-        return '<div class="card" style="margin:0">'
-          +'<div class="card-header" style="padding:10px 14px;background:var(--gray-50)">'
-          +'<div style="display:flex;align-items:center;gap:10px">'
-          +'<div style="width:32px;height:32px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0">'+c.initials+'</div>'
-          +'<div><div style="font-size:13px;font-weight:600">'+c.pac.nome+'</div>'
-          +'<div style="font-size:10px;color:var(--gray-400)">'+c.idadeStr+(c.refTxt?' · Ref: '+c.refTxt+(c.unit?' '+c.unit:''):'')+'</div></div></div>'
-          +'<div style="display:flex;align-items:center;gap:8px">'
-          +'<span style="background:'+c.statusBg+';color:'+c.statusColor+';font-weight:700;padding:3px 10px;border-radius:14px;font-size:12px">'+c.statusLabel+' '+c.last.val+(c.unit?' '+c.unit:'')+'</span>'
-          +'<button onclick="abrirPerfil(&quot;'+c.pac.id+'&quot;);switchTab(&quot;resultados&quot;)" class="btn btn-secondary" style="font-size:10px;padding:4px 8px">Ver →</button>'
-          +'</div></div>'
-          +'<div style="padding:6px 0">'+c.evoRows+'</div>'
-          +'</div>';
-      }).join('')
-    +'</div>';
-
-  resultado.innerHTML = html2;
+  container.innerHTML=out;
 }
 
->
+</script>
+</body>
+</html>
