@@ -3551,6 +3551,7 @@ function abrirPerfil(pacId){
   document.getElementById('view-perfil').classList.add('active');
   document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
   switchTab('resultados');
+  renderResumo();
 }
 
 function switchTab(tab){
@@ -3561,6 +3562,7 @@ function switchTab(tab){
   if(tabEl)tabEl.classList.add('active');
   if(paneEl)paneEl.classList.add('active');
   // resumo tab removed
+  if(tab==='resumo')renderResumo();
   if(tab==='prescricao')renderPrescricao();
   if(tab==='resultados')renderResultadosTab();
   if(tab==='notas')renderNotasTab();
